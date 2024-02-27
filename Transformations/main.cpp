@@ -1,12 +1,18 @@
 #include <glad/glad.h>
+
 #include <GLFW/glfw3.h>
-#include <math.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <lib/shader_s.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <lib/stb_image.h>
 
 #include <iostream>
+#include <math.h>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -107,17 +113,17 @@ int main()
 
     float vertices[] = {
         // vertices         // color          // texture
-        -0.9f, -0.9f, 0.0f, 0.9f, 0.3f, 0.6f, 0.0f, 0.0f, // SW
-        -0.9f, 0.9f, 0.0f, 0.8f, 0.2f, 0.3f, 0.0f, 1.0f,  // NW
-        0.9f, -0.9f, 0.0f, 0.1f, 0.2f, 0.8f, 1.0f, 0.0f,  // SE
-        0.9f, 0.9f, 0.0f, 0.4f, 0.7f, 0.2f, 1.0f, 1.0f    // NE
+        -0.5f, -0.5f, 0.0f, 0.9f, 0.3f, 0.6f, 0.0f, 0.0f, // SW
+        -0.5f, 0.5f, 0.0f, 0.8f, 0.2f, 0.3f, 0.0f, 1.0f,  // NW
+        0.5f, -0.5f, 0.0f, 0.1f, 0.2f, 0.8f, 1.0f, 0.0f,  // SE
+        0.5f, 0.5f, 0.0f, 0.4f, 0.7f, 0.2f, 1.0f, 1.0f    // NE
     };
 
     unsigned int indices[] = {
         0, 1, 2,
         2, 1, 3};
 
-    // + ---------------------------------------------------
+    // ---------------------------------------------------
 
     int numIndices = sizeof(indices) / sizeof(indices[0]);
 
@@ -145,10 +151,6 @@ int main()
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // ! This shouldn't be uncommented as A VAO stores the glBindBuffer calls when the target is GL_ELEMENT_ARRAY_BUFFER.
-    // ! This also means it stores its unbind calls so make sure you don't unbind the element array buffer before unbinding your VAO,
-    // ! otherwise it doesn't have an EBO configured.
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     // TEXTURES
@@ -158,7 +160,7 @@ int main()
     imgToTexID("media/cat2.jpeg", &texture1, GL_REPEAT);
     imgToTexID("media/planets.jpeg", &texture2, GL_CLAMP_TO_EDGE);
 
-    // render loop
+    // RENDER LOOP
     // -----------
 
     shaderProgram.use();
@@ -172,15 +174,43 @@ int main()
         glClearColor(0.09f, 0.11f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // TRANSFORM
+
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.3f, 0.3f, 0.3f));
+        transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        transform = glm::scale(transform, glm::vec3(0.5f, 0.5f, 0.5f));
+
         shaderProgram.setFloat("opacity", opacity);
+        shaderProgram.setMat4("transform", glm::value_ptr(transform));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2); // commenting both ActiveTexture calls still makes planets show up since it default assigns texel 0;
+        glBindTexture(GL_TEXTURE_2D, texture2);
         glBindVertexArray(VAO);
 
         glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+
+        // -------------------------------------------------------
+
+        glm::mat4 transform1 = glm::mat4(1.0f);
+        transform1 = glm::translate(transform1, glm::vec3(-1.0f, 1.0f, 0.0f));
+        transform1 = glm::rotate(transform1, (float)(glfwGetTime() * 12.0), glm::vec3(0.0f, 0.0f, 1.0f));
+        transform1 = glm::scale(transform1, glm::vec3(sin(glfwGetTime()), sin(glfwGetTime()), 1.0f));
+
+        shaderProgram.setFloat("opacity", 1.0f - opacity);
+        shaderProgram.setMat4("transform", glm::value_ptr(transform1));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        glBindVertexArray(VAO);
+
+        glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+
+        // --------------------------------------------------------------
 
         glBindVertexArray(0); // no need to unbind it every time
 
