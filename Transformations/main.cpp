@@ -202,12 +202,6 @@ int main()
         shaderProgram.setFloat("opacity", 1.0f - opacity);
         shaderProgram.setMat4("transform", glm::value_ptr(transform1));
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        glBindVertexArray(VAO);
-
         glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
 
         // --------------------------------------------------------------
