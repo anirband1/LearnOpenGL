@@ -17,6 +17,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <lib/shader_s.h>
+#include <lib/camera.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <lib/stb_image.h>
@@ -32,28 +33,20 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-const float CAMERA_SPEED = 3.0f;
-const float MOUSE_SENSITIVITY = 0.1f;
-const float SCROLL_SENSITIVITY = 1.0f;
 
 float opacity;
 
-float fov = 45.0f;
-
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-float yaw = -90.0f;
-float pitch = 0.0f;
 
 float lastX, lastY;
 bool firstMouse = true;
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
+Camera camera(cameraPos);
 
 float nRand()
 {
@@ -268,13 +261,11 @@ int main()
 
         // TRANSFORM
 
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::lookAt(cameraPos, cameraPos + direction, cameraUp);
-        view = glm::translate(view, -cameraPos); // moving the whole scene fw (illusion of moving camera bk)
+        glm::mat4 view = camera.GetViewMatrix();
         shaderProgram.setMat4("view", glm::value_ptr(view));
 
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 100.0f);
 
         shaderProgram.setMat4("projection", glm::value_ptr(projection));
 
@@ -307,29 +298,22 @@ int main()
 
 void processInput(GLFWwindow *window)
 {
-    float cameraSpeed = CAMERA_SPEED * deltaTime;
-
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     float delOpacity = 0.01;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += direction * cameraSpeed;
-
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= direction * cameraSpeed;
-
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraUp, direction)) * cameraSpeed;
-
+        camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraUp, direction)) * cameraSpeed;
-
+        camera.ProcessKeyboard(RIGHT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        cameraPos += cameraUp * cameraSpeed;
-
+        camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        cameraPos -= cameraUp * cameraSpeed;
+        camera.ProcessKeyboard(DOWN, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_BRACKET) == GLFW_PRESS)
         opacity -= delOpacity;
@@ -359,23 +343,10 @@ void mouse_callback(GLFWwindow *window, double xPos, double yPos)
     lastX = xPos;
     lastY = yPos;
 
-    xOffset *= MOUSE_SENSITIVITY;
-    yOffset *= MOUSE_SENSITIVITY;
-
-    yaw += xOffset;
-    pitch += yOffset;
-
-    pitch = clamp(pitch, -89.0f, 89.0f);
-
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = -sin(glm::radians(pitch)); // ! Minus is different from that in tut, this works tho
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction = glm::normalize(direction);
+    camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    fov -= (float)yoffset * SCROLL_SENSITIVITY;
-
-    fov = clamp(fov, 1.0f, 179.0f);
+    camera.ProcessMouseScroll((float)yoffset);
 }
