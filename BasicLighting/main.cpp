@@ -41,10 +41,9 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool firstMouse = true;
-bool useTextures = false;
+bool useTextures = true;
 
 float lastX, lastY;
-float opacity;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -164,47 +163,48 @@ int main()
     // };
 
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, //
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,  //
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,   //
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,   //
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,  //
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, //
+        // positions          // normals        // texture coords
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  //
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  //
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, //
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,  //
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,   //
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,   //
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,  //
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  //
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   //
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   //
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  //
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //
 
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,   //
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,  //
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, //
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, //
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,  //
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,   //
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  //
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  //
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
 
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,   //
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,  //
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, //
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, //
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,  //
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,   //
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  //
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  //
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
 
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, //
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,  //
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,   //
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,   //
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,  //
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, //
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  //
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   //
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   //
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  //
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, //
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, //
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,  //
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,   //
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,   //
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,  //
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, //
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  //
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  //
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  //
     };
 
     // unsigned int indices[] = {
@@ -256,10 +256,13 @@ int main()
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(3);
 
     // + Light buffers, VAO
@@ -270,28 +273,33 @@ int main()
     glBindVertexArray(lightVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // TEXTURES
+    // + TEXTURES AND PRE-LOOP
 
-    unsigned int texture1, texture2;
-
-    if (useTextures)
-    {
-        imgToTexID("media/voldemort.jpeg", &texture1, GL_REPEAT);
-        imgToTexID("media/planets.jpeg", &texture2, GL_CLAMP_TO_EDGE);
-    }
-
-    // RENDER LOOP
-    // -----------
+    unsigned int diffuseMap, specularMap;
 
     litShader.use();
     litShader.setBool("useTextures", useTextures);
-    litShader.setVec3("lightPos", glm::value_ptr(lightPositions[0]));
+    litShader.setVec3("light.lightPos", glm::value_ptr(lightPositions[0]));
+
+    if (useTextures)
+    {
+        imgToTexID("media/container_diffuse.jpg", &diffuseMap, GL_REPEAT);
+        imgToTexID("media/container_specular.jpg", &specularMap, GL_REPEAT);
+
+        litShader.setInt("textureMaterial.albedo", 0);
+        litShader.setInt("textureMaterial.specular", 1);
+    }
+    else
+        litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
+
+    // + RENDER LOOP
+    // -----------
 
     while (!glfwWindowShouldClose(window))
     {
@@ -316,10 +324,7 @@ int main()
 
 #pragma region OBJECT
 
-        litShader.setVec3("objColor", glm::value_ptr(objColor));
-        litShader.setVec3("lightColor", glm::value_ptr(lightColor));
-
-        litShader.setFloat("opacity", opacity);
+        litShader.setVec3("light.lightColor", glm::value_ptr(lightColor));
 
         litShader.setMat4("view", glm::value_ptr(view));
         litShader.setMat4("projection", glm::value_ptr(projection));
@@ -327,13 +332,10 @@ int main()
         // TEXTURE
         if (useTextures)
         {
-            litShader.setInt("imageTexture1", 0);
-            litShader.setInt("imageTexture2", 1);
-
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture1);
+            glBindTexture(GL_TEXTURE_2D, diffuseMap);
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture2);
+            glBindTexture(GL_TEXTURE_2D, specularMap);
         }
 
         // TRANSFORM
@@ -402,7 +404,6 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    float delOpacity = 0.01;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -415,14 +416,6 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
-
-    if (glfwGetKey(window, GLFW_KEY_LEFT_BRACKET) == GLFW_PRESS)
-        opacity -= delOpacity;
-
-    if (glfwGetKey(window, GLFW_KEY_RIGHT_BRACKET) == GLFW_PRESS)
-        opacity += delOpacity;
-
-    opacity = clamp(opacity, 0.0, 1.0);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)

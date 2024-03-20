@@ -6,14 +6,29 @@ in vec2 TexCoord;
 in vec3 FragPos;
 in vec3 Normal;
 
-uniform sampler2D imageTexture1;
-uniform sampler2D imageTexture2;
-
-uniform float opacity;
-uniform vec3 lightColor;
-uniform vec3 lightPos;
-uniform vec3 objColor;
+// uniform float opacity;  
+// uniform vec3 lightColor;
+// uniform vec3 lightPos; 
+// uniform vec3 objColor; 
 uniform bool useTextures;
+
+struct BasicMaterial {
+    vec3 albedo;
+};
+
+struct TextureMaterial {
+    sampler2D albedo;
+    sampler2D specular;
+};
+
+struct Light{
+    vec3 lightColor;
+    vec3 lightPos;
+};
+
+uniform BasicMaterial basicMaterial;
+uniform TextureMaterial textureMaterial;
+uniform Light light;
 
 uniform vec3 viewPos;
 
@@ -26,7 +41,8 @@ const float AMBIENT_STRENGTH = 0.1F;
 const float DIFFUSE_STRENGTH = 0.45F;
 const float SPECULAR_STRENGTH = 0.45F;
 
-const float SPECULAR_POWER = 32.0;
+const float SPECULAR_POWER = 64.0F;
+
 const float repeat=1.;
 
 float rand(vec2 seed){
@@ -35,17 +51,20 @@ float rand(vec2 seed){
 
 void main()
 {
+    // doing this to avoid if statements
+    vec3 albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.albedo, TexCoord).rgb;
+    vec3 specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.specular, TexCoord).rgb;
+
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos);
-    float invDist = inversesqrt(pow(length(lightPos - FragPos), 2));
+    vec3 lightDir = normalize(light.lightPos - FragPos);
+    float invDist = inversesqrt(pow(length(light.lightPos - FragPos), 2));
 
     // + AMBIENT
-    vec3 ambientColor = objColor * AMBIENT_STRENGTH;
-
+    vec3 ambientColor = albedo * AMBIENT_STRENGTH;
 
     // + DIFFUSE
     float diff = max(dot(lightDir, norm), 0.0);
-    vec3 diffuseColor = diff * objColor * DIFFUSE_STRENGTH  * invDist;
+    vec3 diffuseColor = diff * albedo * DIFFUSE_STRENGTH  * invDist;
 
     // + SPECULAR
     vec3 viewDir = normalize(-FragPos + viewPos);
@@ -53,15 +72,13 @@ void main()
 
     float spec = max(dot(viewDir, reflectDir), 0.0);
     spec = pow(spec, SPECULAR_POWER);
-    vec3 specularColor = spec * objColor * SPECULAR_STRENGTH * invDist;
+    vec3 specularColor = spec * specular * SPECULAR_STRENGTH * invDist;
 
     // + TOTAL
-    vec3 result = (ambientColor + diffuseColor + specularColor) * lightColor;
+    vec3 result = (ambientColor + diffuseColor + specularColor) * light.lightColor;
 
+    FragColor=  vec4(result, 1.0);
 
-    if (useTextures)
-        FragColor=mix(texture(imageTexture1,TexCoord*repeat),texture(imageTexture2,TexCoord*repeat),opacity)*0.5 + vec4(vertexColor,1.)*rand(gl_FragCoord.xy);
-    else
-        // FragColor=vec4(normal * lightColor, 1.0);
-        FragColor=vec4(result, 1.0);
+    // for noise append: + vec4(vertexColor,1.)*rand(gl_FragCoord.xy);
+
 }
