@@ -36,12 +36,14 @@ const unsigned int SCR_HEIGHT = 600;
 
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 glm::vec3 objColor = glm::vec3(1.0f, 0.5f, 0.31f);
+glm::vec3 sunDir = glm::vec3(0.0f, -1.0f, 0.0f);
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+float lightStrength = 3.0f;
 
 bool firstMouse = true;
-bool useTextures = false;
+bool useTextures = true;
 
 float lastX, lastY;
 
@@ -285,7 +287,12 @@ int main()
 
     litShader.use();
     litShader.setBool("useTextures", useTextures);
-    litShader.setVec3("light.lightPos", glm::value_ptr(lightPositions[0]));
+    litShader.setVec3("pointLight.lightPos", glm::value_ptr(lightPositions[0]));
+    litShader.setVec3("directionalLight.lightDir", glm::value_ptr(sunDir));
+
+    litShader.setFloat("pointLight.lightStrength", lightStrength);
+    litShader.setFloat("directionalLight.lightStrength", lightStrength);
+    litShader.setFloat("spotLight.lightStrength", lightStrength);
 
     if (useTextures)
     {
@@ -324,7 +331,14 @@ int main()
 
 #pragma region OBJECT
 
-        litShader.setVec3("light.lightColor", glm::value_ptr(lightColor));
+        litShader.setVec3("pointLight.lightColor", glm::value_ptr(lightColor));
+        litShader.setVec3("directionalLight.lightColor", glm::value_ptr(lightColor));
+        litShader.setVec3("spotLight.lightColor", glm::value_ptr(lightColor));
+
+        litShader.setVec3("spotLight.lightPos", glm::value_ptr(camera.Position));
+        litShader.setVec3("spotLight.lightDir", glm::value_ptr(camera.LookDir));
+        litShader.setFloat("spotLight.innerCutoff", glm::cos(glm::radians(12.5f)));
+        litShader.setFloat("spotLight.outerCutoff", glm::cos(glm::radians(17.5f)));
 
         litShader.setMat4("view", glm::value_ptr(view));
         litShader.setMat4("projection", glm::value_ptr(projection));
