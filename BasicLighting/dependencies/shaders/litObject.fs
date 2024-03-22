@@ -53,11 +53,12 @@ void main()
 {
     // doing this to avoid if statements
     vec3 albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.albedo, TexCoord).rgb;
-    vec3 specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.specular, TexCoord).rgb;
+    // vec3 specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*(texture(textureMaterial.specular, TexCoord).rgb);
+    vec3 specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*(texture(textureMaterial.specular, TexCoord).rgb);
 
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.lightPos - FragPos);
-    float invDist = inversesqrt(pow(length(light.lightPos - FragPos), 2));
+    float invDist = inversesqrt(pow(length(1.0 + light.lightPos - FragPos), 2));
 
     // + AMBIENT
     vec3 ambientColor = albedo * AMBIENT_STRENGTH;

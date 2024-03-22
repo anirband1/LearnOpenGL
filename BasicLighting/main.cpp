@@ -41,7 +41,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool firstMouse = true;
-bool useTextures = true;
+bool useTextures = false;
 
 float lastX, lastY;
 
