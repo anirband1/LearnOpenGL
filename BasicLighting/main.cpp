@@ -22,6 +22,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <lib/stb_image.h>
 
+#include <core/lights.cpp>
+
 #include <iostream>
 #include <math.h>
 
@@ -287,12 +289,19 @@ int main()
 
     litShader.use();
     litShader.setBool("useTextures", useTextures);
-    litShader.setVec3("pointLight.lightPos", glm::value_ptr(lightPositions[0]));
-    litShader.setVec3("directionalLight.lightDir", glm::value_ptr(sunDir));
 
+    litShader.setVec3("pointLight.lightPos", glm::value_ptr(lightPositions[0]));
+    litShader.setVec3("pointLight.lightColor", glm::value_ptr(lightColor));
     litShader.setFloat("pointLight.lightStrength", lightStrength);
+
+    litShader.setVec3("directionalLight.lightDir", glm::value_ptr(sunDir));
+    litShader.setVec3("directionalLight.lightColor", glm::value_ptr(lightColor));
     litShader.setFloat("directionalLight.lightStrength", lightStrength);
+
+    litShader.setVec3("spotLight.lightColor", glm::value_ptr(lightColor));
     litShader.setFloat("spotLight.lightStrength", lightStrength);
+    litShader.setFloat("spotLight.innerCutoff", glm::cos(glm::radians(12.5f)));
+    litShader.setFloat("spotLight.outerCutoff", glm::cos(glm::radians(17.5f)));
 
     if (useTextures)
     {
@@ -331,14 +340,8 @@ int main()
 
 #pragma region OBJECT
 
-        litShader.setVec3("pointLight.lightColor", glm::value_ptr(lightColor));
-        litShader.setVec3("directionalLight.lightColor", glm::value_ptr(lightColor));
-        litShader.setVec3("spotLight.lightColor", glm::value_ptr(lightColor));
-
         litShader.setVec3("spotLight.lightPos", glm::value_ptr(camera.Position));
         litShader.setVec3("spotLight.lightDir", glm::value_ptr(camera.LookDir));
-        litShader.setFloat("spotLight.innerCutoff", glm::cos(glm::radians(12.5f)));
-        litShader.setFloat("spotLight.outerCutoff", glm::cos(glm::radians(17.5f)));
 
         litShader.setMat4("view", glm::value_ptr(view));
         litShader.setMat4("projection", glm::value_ptr(projection));
