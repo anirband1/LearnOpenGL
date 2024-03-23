@@ -1,5 +1,16 @@
 # version 330 core
 
+#ifndef NR_POINT
+    #define NR_POINT 0
+#endif
+#ifndef NR_DIR
+    #define NR_DIR 0
+#endif
+#ifndef NR_SPOT
+    #define NR_SPOT 0
+#endif
+
+
 out vec4 FragColor;
 in vec3 vertexColor;
 in vec2 TexCoord;
@@ -44,9 +55,12 @@ struct SpotLight{
 
 uniform BasicMaterial basicMaterial;
 uniform TextureMaterial textureMaterial;
-uniform PointLight pointLight;
-uniform DirectionalLight directionalLight;
-uniform SpotLight spotLight;
+
+// Workaround for arrays to have min size 1:
+// make the array size 1 but while iterating, take end to be 0 ---> (i=0; i<0; i++)
+uniform PointLight pointLights[max(NR_POINT, 1)];
+uniform DirectionalLight directionalLights[max(NR_DIR, 1)];
+uniform SpotLight spotLights[max(NR_SPOT, 1)];
 
 uniform vec3 viewPos;
 
@@ -63,11 +77,14 @@ const float SPECULAR_POWER = 64.0F;
 
 const float repeat=1.;
 
+vec3 albedo;
+vec3 specular;
+
 float rand(vec2 seed){
     return fract(sin(dot(seed.xy,vec2(.02898,.0233)))*43758.5453);
 }
 
-vec3 pointResult(PointLight pointLight, vec3 albedo, vec3 specular)
+vec3 pointResult(PointLight pointLight)
 {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(pointLight.lightPos - FragPos);
@@ -94,7 +111,7 @@ vec3 pointResult(PointLight pointLight, vec3 albedo, vec3 specular)
     return result;
 }
 
-vec3 directionalResult(DirectionalLight directionalLight, vec3 albedo, vec3 specular)
+vec3 directionalResult(DirectionalLight directionalLight)
 {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(-directionalLight.lightDir); // vector should point towards light source for calculations
@@ -120,7 +137,7 @@ vec3 directionalResult(DirectionalLight directionalLight, vec3 albedo, vec3 spec
     return result;
 }
 
-vec3 spotResult(SpotLight spotLight, vec3 albedo, vec3 specular)
+vec3 spotResult(SpotLight spotLight)
 {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(spotLight.lightPos - FragPos); // vector should point towards light source for calculations
@@ -153,12 +170,19 @@ vec3 spotResult(SpotLight spotLight, vec3 albedo, vec3 specular)
 void main()
 {
     // doing this to avoid if statements
-    vec3 albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.albedo, TexCoord).rgb;
-    vec3 specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*(texture(textureMaterial.specular, TexCoord).rgb);
+    albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterial.albedo, TexCoord).rgb;
+    specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*(texture(textureMaterial.specular, TexCoord).rgb);
 
-    // vec3 result = pointResult(pointLight, albedo, specular);
-    // vec3 result = directionalResult(directionalLight, albedo, specular);
-    vec3 result = spotResult(spotLight, albedo, specular);
+    vec3 result = vec3(0.0);
+
+    for(int i = 0; i < NR_POINT; i++)
+        result += pointResult(pointLights[i]);
+
+    for(int i = 0; i < NR_DIR; i++)
+        result += directionalResult(directionalLights[i]);
+
+    for(int i = 0; i < NR_SPOT; i++)
+        result += spotResult(spotLights[i]);
 
     FragColor =  vec4(result, 1.0);
 

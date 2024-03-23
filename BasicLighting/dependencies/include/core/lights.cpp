@@ -100,13 +100,13 @@ public:
 
     SpotLight(Shader *_shaderProg, glm::vec3 _lightColor, float _lightStrength, glm::vec3 _lightPos, glm::vec3 _lightDir, float _innerCutoff, float _outerCutoff)
     {
-        shaderProg = _shaderProg;
-        lightColor = _lightColor;
-        lightStrength = _lightStrength;
-        lightPos = _lightPos;
-        lightDir = _lightDir;
-        innerCutoff = _innerCutoff;
-        outerCutoff = _outerCutoff;
+        this->shaderProg = _shaderProg;
+        this->lightColor = _lightColor;
+        this->lightStrength = _lightStrength;
+        this->lightPos = _lightPos;
+        this->lightDir = _lightDir;
+        this->innerCutoff = _innerCutoff;
+        this->outerCutoff = _outerCutoff;
 
         shaderProg->use();
 

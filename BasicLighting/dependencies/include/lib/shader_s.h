@@ -45,29 +45,40 @@ public:
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
         }
-        const char *vShaderCode = vertexCode.c_str();
-        const char *fShaderCode = fragmentCode.c_str();
+
+        vShaderCode = unconstchar(vertexCode.c_str());
+        fShaderCode = unconstchar(fragmentCode.c_str());
         // 2. compile shaders
-        unsigned int vertex, fragment;
-        // vertex shader
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vShaderCode, NULL);
-        glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
-        // fragment Shader
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fShaderCode, NULL);
-        glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
-        // shader Program
-        ID = glCreateProgram();
-        glAttachShader(ID, vertex);
-        glAttachShader(ID, fragment);
-        glLinkProgram(ID);
-        checkCompileErrors(ID, "PROGRAM");
-        // delete the shaders as they're linked into our program now and no longer necessary
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
+
+        ID = compileAndLink(vShaderCode, fShaderCode);
+    }
+
+    // insert directives
+    // ------------------------------------------------------------------------
+
+    /// @param whichShader 0 for vertex shader, 1 for fragment shader
+    void insertDirective(int whichShader, std::string directive)
+    {
+        if (!whichShader) // vertex shader
+        {
+            std::string s = std::string(vShaderCode);
+
+            std::string version = s.substr(0, s.find('\n')) + '\n';
+            std::string rest = s.substr(s.find('\n'));
+            std::string vertexCode = version + directive + '\n' + rest;
+            vShaderCode = unconstchar(vertexCode.c_str());
+        }
+        else // fragment shader
+        {
+            std::string s = std::string(fShaderCode);
+
+            std::string version = s.substr(0, s.find('\n')) + '\n';
+            std::string rest = s.substr(s.find('\n'));
+            std::string fragmentCode = version + directive + '\n' + rest;
+            fShaderCode = unconstchar(fragmentCode.c_str());
+        }
+
+        ID = compileAndLink(vShaderCode, fShaderCode);
     }
     // activate the shader
     // ------------------------------------------------------------------------
@@ -115,9 +126,13 @@ public:
     // }
 
 private:
+    char *vShaderCode;
+    char *fShaderCode;
+
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
-    void checkCompileErrors(unsigned int shader, std::string type)
+    void
+    checkCompileErrors(unsigned int shader, std::string type)
     {
         int success;
         char infoLog[1024];
@@ -140,6 +155,56 @@ private:
                 std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n"
                           << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
             }
+        }
+    }
+
+    int compileAndLink(const char *vShaderCode, const char *fShaderCode)
+    {
+        unsigned int vertex, fragment;
+        // vertex shader
+        vertex = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex, 1, &vShaderCode, NULL);
+        glCompileShader(vertex);
+        checkCompileErrors(vertex, "VERTEX");
+        // fragment Shader
+        fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment, 1, &fShaderCode, NULL);
+        glCompileShader(fragment);
+        checkCompileErrors(fragment, "FRAGMENT");
+        // shader Program
+        ID = glCreateProgram();
+        glAttachShader(ID, vertex);
+        glAttachShader(ID, fragment);
+        glLinkProgram(ID);
+        checkCompileErrors(ID, "PROGRAM");
+        // delete the shaders as they're linked into our program now and no longer necessary
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+
+        return ID;
+    }
+
+    // ! really sus function to convert from const char* to char*
+    char *unconstchar(const char *s)
+    {
+        if (!s)
+            return NULL;
+        int i;
+        char *res = NULL;
+        res = (char *)malloc(strlen(s) + 1);
+        if (!res)
+        {
+            fprintf(stderr, "Memory Allocation Failed! Exiting...\n");
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            for (i = 0; s[i] != '\0'; i++)
+            {
+                res[i] = s[i];
+            }
+            res[i] = '\0';
+            return res;
         }
     }
 };

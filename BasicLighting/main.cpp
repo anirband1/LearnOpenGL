@@ -8,6 +8,9 @@
 // [ to decrease opactity of second tex
 // scroll to zoom
 
+// TODO check how many shaders are active after using insertDirective   {shader_s.h}
+// TODO check whether the correct shader is deleted if adding del() to compileAndLink() {shader_s.h}
+
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
@@ -25,7 +28,12 @@
 #include <core/lights.cpp>
 
 #include <iostream>
+#include <cstring>
 #include <math.h>
+
+#define POINT_LIGHT_NR 4
+#define DIR_LIGHT_NR 1
+#define SPOT_LIGHT_NR 1
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xPos, double yPos);
@@ -153,6 +161,10 @@ int main()
     Shader litShader("dependencies/shaders/litObject.vs", "dependencies/shaders/litObject.fs");
     Shader lightSourceShader("dependencies/shaders/light.vs", "dependencies/shaders/light.fs");
 
+    litShader.insertDirective(1, "#define NR_POINT " + std::to_string(POINT_LIGHT_NR));
+    litShader.insertDirective(1, "#define NR_DIR " + std::to_string(DIR_LIGHT_NR));
+    litShader.insertDirective(1, "#define NR_SPOT " + std::to_string(POINT_LIGHT_NR));
+
     // + Inits
 
     // float vertices[] = {
@@ -238,7 +250,10 @@ int main()
         glm::vec3(-1.3f, 1.0f, -1.5f)};
 
     glm::vec3 lightPositions[] = {
-        glm::vec3(-1.3f, 1.0f, -2.5f)};
+        glm::vec3(-1.3f, 1.0f, -2.5f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f, 2.0f, -12.0f),
+        glm::vec3(0.0f, 0.0f, -3.0f)};
     // ---------------------------------------------------
 
     // int numIndices = sizeof(indices) / sizeof(indices[0]); // ----
@@ -290,18 +305,53 @@ int main()
     litShader.use();
     litShader.setBool("useTextures", useTextures);
 
-    litShader.setVec3("pointLight.lightPos", glm::value_ptr(lightPositions[0]));
-    litShader.setVec3("pointLight.lightColor", glm::value_ptr(lightColor));
-    litShader.setFloat("pointLight.lightStrength", lightStrength);
+    for (int i = 0; i < POINT_LIGHT_NR; i++)
+    {
+        std::string posChar = "pointLights[" + std::to_string(i) + "].lightPos";
+        std::string colorChar = "pointLights[" + std::to_string(i) + "].lightColor";
+        std::string strengthChar = "pointLights[" + std::to_string(i) + "].lightStrength";
 
-    litShader.setVec3("directionalLight.lightDir", glm::value_ptr(sunDir));
-    litShader.setVec3("directionalLight.lightColor", glm::value_ptr(lightColor));
-    litShader.setFloat("directionalLight.lightStrength", lightStrength);
+        // litShader.setVec3("pointLights[0].lightPos", glm::value_ptr(lightPositions[0]));
+        // litShader.setVec3("pointLights[0].lightColor", glm::value_ptr(lightColor));
+        // litShader.setFloat("pointLights[0].lightStrength", lightStrength);
 
-    litShader.setVec3("spotLight.lightColor", glm::value_ptr(lightColor));
-    litShader.setFloat("spotLight.lightStrength", lightStrength);
-    litShader.setFloat("spotLight.innerCutoff", glm::cos(glm::radians(12.5f)));
-    litShader.setFloat("spotLight.outerCutoff", glm::cos(glm::radians(17.5f)));
+        litShader.setVec3(posChar, glm::value_ptr(lightPositions[i]));
+        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
+        litShader.setFloat(strengthChar, lightStrength);
+    }
+
+    for (int i = 0; i < DIR_LIGHT_NR; i++)
+    {
+        std::string dirChar = "directionalLights[" + std::to_string(i) + "].lightDir";
+        std::string colorChar = "directionalLights[" + std::to_string(i) + "].lightColor";
+        std::string strengthChar = "directionalLights[" + std::to_string(i) + "].lightStrength";
+
+        // litShader.setVec3("directionalLights[0].lightDir", glm::value_ptr(sunDir));
+        // litShader.setVec3("directionalLights[0].lightColor", glm::value_ptr(lightColor));
+        // litShader.setFloat("directionalLights[0].lightStrength", lightStrength);
+
+        litShader.setVec3(dirChar, glm::value_ptr(sunDir));
+        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
+        litShader.setFloat(strengthChar, lightStrength);
+    }
+
+    for (int i = 0; i < SPOT_LIGHT_NR; i++)
+    {
+        std::string colorChar = "spotLights[" + std::to_string(i) + "].lightColor";
+        std::string strengthChar = "spotLights[" + std::to_string(i) + "].lightStrength";
+        std::string innerCutoffChar = "spotLights[" + std::to_string(i) + "].innerCutoff";
+        std::string outerCutoffdirChar = "spotLights[" + std::to_string(i) + "].outerCutoff";
+
+        // litShader.setVec3("spotLights[0].lightColor", glm::value_ptr(lightColor));
+        // litShader.setFloat("spotLights[0].lightStrength", lightStrength);
+        // litShader.setFloat("spotLights[0].innerCutoff", glm::cos(glm::radians(12.5f)));
+        // litShader.setFloat("spotLights[0].outerCutoff", glm::cos(glm::radians(17.5f)));
+
+        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
+        litShader.setFloat(strengthChar, lightStrength);
+        litShader.setFloat(innerCutoffChar, glm::cos(glm::radians(12.5f)));
+        litShader.setFloat(outerCutoffdirChar, glm::cos(glm::radians(17.5f)));
+    }
 
     if (useTextures)
     {
@@ -340,8 +390,8 @@ int main()
 
 #pragma region OBJECT
 
-        litShader.setVec3("spotLight.lightPos", glm::value_ptr(camera.Position));
-        litShader.setVec3("spotLight.lightDir", glm::value_ptr(camera.LookDir));
+        litShader.setVec3("spotLights[0].lightPos", glm::value_ptr(camera.Position));
+        litShader.setVec3("spotLights[0].lightDir", glm::value_ptr(camera.LookDir));
 
         litShader.setMat4("view", glm::value_ptr(view));
         litShader.setMat4("projection", glm::value_ptr(projection));
