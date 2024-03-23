@@ -307,50 +307,17 @@ int main()
 
     for (int i = 0; i < POINT_LIGHT_NR; i++)
     {
-        std::string posChar = "pointLights[" + std::to_string(i) + "].lightPos";
-        std::string colorChar = "pointLights[" + std::to_string(i) + "].lightColor";
-        std::string strengthChar = "pointLights[" + std::to_string(i) + "].lightStrength";
-
-        // litShader.setVec3("pointLights[0].lightPos", glm::value_ptr(lightPositions[0]));
-        // litShader.setVec3("pointLights[0].lightColor", glm::value_ptr(lightColor));
-        // litShader.setFloat("pointLights[0].lightStrength", lightStrength);
-
-        litShader.setVec3(posChar, glm::value_ptr(lightPositions[i]));
-        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
-        litShader.setFloat(strengthChar, lightStrength);
+        PointLight(&litShader, lightColor, lightStrength, lightPositions[i], i);
     }
 
     for (int i = 0; i < DIR_LIGHT_NR; i++)
     {
-        std::string dirChar = "directionalLights[" + std::to_string(i) + "].lightDir";
-        std::string colorChar = "directionalLights[" + std::to_string(i) + "].lightColor";
-        std::string strengthChar = "directionalLights[" + std::to_string(i) + "].lightStrength";
-
-        // litShader.setVec3("directionalLights[0].lightDir", glm::value_ptr(sunDir));
-        // litShader.setVec3("directionalLights[0].lightColor", glm::value_ptr(lightColor));
-        // litShader.setFloat("directionalLights[0].lightStrength", lightStrength);
-
-        litShader.setVec3(dirChar, glm::value_ptr(sunDir));
-        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
-        litShader.setFloat(strengthChar, lightStrength);
+        DirectionalLight(&litShader, lightColor, lightStrength, sunDir, i);
     }
 
     for (int i = 0; i < SPOT_LIGHT_NR; i++)
     {
-        std::string colorChar = "spotLights[" + std::to_string(i) + "].lightColor";
-        std::string strengthChar = "spotLights[" + std::to_string(i) + "].lightStrength";
-        std::string innerCutoffChar = "spotLights[" + std::to_string(i) + "].innerCutoff";
-        std::string outerCutoffdirChar = "spotLights[" + std::to_string(i) + "].outerCutoff";
-
-        // litShader.setVec3("spotLights[0].lightColor", glm::value_ptr(lightColor));
-        // litShader.setFloat("spotLights[0].lightStrength", lightStrength);
-        // litShader.setFloat("spotLights[0].innerCutoff", glm::cos(glm::radians(12.5f)));
-        // litShader.setFloat("spotLights[0].outerCutoff", glm::cos(glm::radians(17.5f)));
-
-        litShader.setVec3(colorChar, glm::value_ptr(lightColor));
-        litShader.setFloat(strengthChar, lightStrength);
-        litShader.setFloat(innerCutoffChar, glm::cos(glm::radians(12.5f)));
-        litShader.setFloat(outerCutoffdirChar, glm::cos(glm::radians(17.5f)));
+        SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i);
     }
 
     if (useTextures)
