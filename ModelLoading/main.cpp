@@ -140,13 +140,15 @@ int main()
 #pragma region 'global OpenGL states'
     // * Two ways to render it such that depth of points are respected:
 
-    // -- 1. Backface Culling
+    // -- 1. Backface Culling // this speeds up model rendering by a lot
     glFrontFace(GL_CCW);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     // -- 2. Z-Buffer
     glEnable(GL_DEPTH_TEST);
+
+    glDepthFunc(GL_LESS);
 #pragma endregion
 
 #pragma region 'shader initializations'
@@ -162,25 +164,14 @@ int main()
 
 #pragma region // + CUBE VERTICES INIT
 
-    // float vertices[] = {
-    //     -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,  //
-    //     -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,   //
-    //     0.5f, -0.5f, 0.5f, 1.0f, 0.0f,   //
-    //     0.5f, 0.5f, 0.5f, 1.0f, 1.0f,    //
-    //     -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
-    //     -0.5f, 0.5f, -0.5f, 0.0f, 0.0f,  //
-    //     0.5f, -0.5f, -0.5f, 1.0f, 1.0f,  //
-    //     0.5f, 0.5f, -0.5f, 1.0f, 0.0f,   //
-    // };
-
     float vertices[] = {
         // positions          // normals        // texture coords
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  //
         0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  //
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  //
 
         -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //
         0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  //
@@ -197,11 +188,11 @@ int main()
         -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
 
         0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
         0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  //
         0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  //
         0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   //
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  //
 
         -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, //
         0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  //
@@ -211,11 +202,11 @@ int main()
         -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, //
 
         -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
         0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  //
         0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
         -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  //
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  //
     };
 
     glm::vec3 lightPositions[] = {
@@ -230,20 +221,7 @@ int main()
 
 #pragma endregion
 
-#pragma region // + Object buffers, VAO
-
-    // unsigned int VBO, normalVBO;
-
-    // glGenBuffers(1, &VBO);
-    // glGenBuffers(1, &normalVBO);
-
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-#pragma endregion
-
 #pragma region // + Light buffers, VAO
-
-    // we only need VAo as vertices are already defined, they just have different properties this time.
 
     unsigned int lightVAO;
     unsigned int VBO;
@@ -252,12 +230,12 @@ int main()
 
     glGenBuffers(1, &VBO);
 
+    // light
     glBindVertexArray(lightVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
@@ -301,7 +279,7 @@ int main()
 
 #pragma endregion
 
-#pragma region
+#pragma region // + Model load
 
     stbi_set_flip_vertically_on_load(true);
 

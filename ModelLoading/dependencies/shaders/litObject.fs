@@ -14,6 +14,9 @@
     #define MAX_MATERIALS 1
 #endif
 
+#define E 2.718281828459045
+
+// -------------------------------------------------------------------------------------------------------------------------
 
 struct BasicMaterial {
     vec3 albedo;
@@ -78,7 +81,33 @@ vec3 localNormal;
 
 vec3 normal;
 
-vec3 pointResult(PointLight pointLight)
+// -------------------------------------------------------------------------------------------------------------------------
+
+
+float mapinf2one(float val)
+{
+    return 1 - 2/(pow(E, 2.86*val) + pow(E, -2.86*val));
+}
+
+float luma (vec3 color)
+{
+    return 0.299*color.r+0.587*color.g+0.114*color.b;
+}
+
+vec3 proprtionalColor(vec3 color)
+{
+    if(luma(color) > 1)
+    {
+        float maxChannel = max(color.r, max(color.g, color.b));
+        return color/maxChannel;
+    }
+    return color ;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------
+
+
+vec3 PointResult(PointLight pointLight)
 {
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(pointLight.lightPos - FragPos);
@@ -105,7 +134,7 @@ vec3 pointResult(PointLight pointLight)
     return result;
 }
 
-vec3 directionalResult(DirectionalLight directionalLight)
+vec3 DirectionalResult(DirectionalLight directionalLight)
 {
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(-directionalLight.lightDir); // vector should point towards light source for calculations
@@ -131,7 +160,7 @@ vec3 directionalResult(DirectionalLight directionalLight)
     return result;
 }
 
-vec3 spotResult(SpotLight spotLight)
+vec3 SpotResult(SpotLight spotLight)
 {
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(spotLight.lightPos - FragPos); // vector should point towards light source for calculations
@@ -169,24 +198,26 @@ void main()
     // doing this to avoid if statements
     albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterials[activeMaterial].albedo, TexCoord).rgb;
     specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterials[activeMaterial].specular, TexCoord).rgb;
-    localNormal =int(!useTextures)*(vec3(0.5, 0.5, 1)) + int(useTextures)*texture(textureMaterials[activeMaterial].normal, TexCoord).rgb;
-
-    // albedo = texture(textureMaterials[activeMaterial].albedo, TexCoord).rgb;
-    // specular = texture(textureMaterials[activeMaterial].specular, TexCoord).rgb;
-    // localNormal = texture(textureMaterials[activeMaterial].normal, TexCoord).rgb;
+    localNormal = int(!useTextures)*(vec3(0.5, 0.5, 1)) + int(useTextures)*texture(textureMaterials[activeMaterial].normal, TexCoord).rgb;
 
     normal = Normal + (localNormal - vec3(0.5, 0.5, 1));
 
     vec3 result = vec3(0.0);
 
     for(int i = 0; i < NR_POINT; i++)
-        result += pointResult(pointLights[i]);
+        result += PointResult(pointLights[i]);
 
     for(int i = 0; i < NR_DIR; i++)
-        result += directionalResult(directionalLights[i]);
+        result += DirectionalResult(directionalLights[i]);
 
     for(int i = 0; i < NR_SPOT; i++)
-        result += spotResult(spotLights[i]);
+        result += SpotResult(spotLights[i]);
+
+
+    // remove clipping 
+    // result = vec3 (mapinf2one(result.r), mapinf2one(result.g), mapinf2one(result.b));
+    // result = proprtionalColor(result);
+    // result *= 0.3;
 
     FragColor =  vec4(result, 1.0);
 }

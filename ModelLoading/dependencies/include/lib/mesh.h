@@ -65,7 +65,7 @@ public:
                 index = to_string(normalNR++);
 
             shader->setInt("textureMaterials[" + index + "]." + type, i);
-            glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            glBindTexture(GL_TEXTURE_2D, textures[i].id); // + possible optimization, put this part in setup, instead of draw
         }
 
         glBindVertexArray(VAO);
