@@ -37,7 +37,7 @@ public:
         for (unsigned int i = 0; i < meshes.size(); i++)
         {
             if (useOutline)
-                meshes[i].DrawWithOutline(shader, outline);
+                meshes[i].Draw(shader, outline);
             else
                 meshes[i].Draw(shader);
         }

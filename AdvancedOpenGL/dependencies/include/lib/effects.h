@@ -14,6 +14,7 @@
 
 #include <iostream>
 
+// + only applies on non-assimp-model objects (like primitives)
 void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int numDrawnVertices, Transform transform, glm::vec3 color, float thickness)
 {
     // * inits
@@ -31,8 +32,8 @@ void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int
 
     shader->use();
 
-    glm::mat4 modelMat = transform.GetModelMat();
-    glm::mat3 normalMat = transform.GetNormalMat();
+    glm::mat4 modelMat = transform.modelMatx;
+    glm::mat3 normalMat = transform.normalMatx;
     shader->setMat4("model", glm::value_ptr(modelMat));      // + whaaaaaa?
     shader->setMat3("normalMat", glm::value_ptr(normalMat)); // + whaaaaaa?
 
@@ -53,10 +54,10 @@ void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int
 
     // + ---------------------------------------------------------------------------------
     Transform scaledTransform = transform;
-    scaledTransform.scale += thickness;
+    scaledTransform.setScale(transform.getScale() + thickness);
 
-    modelMat = scaledTransform.GetModelMat();
-    normalMat = scaledTransform.GetNormalMat();
+    modelMat = scaledTransform.modelMatx;
+    normalMat = scaledTransform.normalMatx;
     outlineShader->setMat4("model", glm::value_ptr(modelMat));
     outlineShader->setMat3("normalMat", glm::value_ptr(normalMat));
 

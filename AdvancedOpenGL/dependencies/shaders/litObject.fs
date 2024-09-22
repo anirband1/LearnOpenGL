@@ -27,6 +27,7 @@
 
 struct BasicMaterial {
     vec3 albedo;
+    vec3 specular;
 };
 
 struct TextureMaterial {
@@ -96,7 +97,7 @@ float mapinf2one(float val)
     return 1 - 2/(pow(E, 2.86*val) + pow(E, -2.86*val));
 }
 
-float luma (vec3 color)
+float luma(vec3 color)
 {
     return 0.299*color.r+0.587*color.g+0.114*color.b;
 }
@@ -212,7 +213,7 @@ void main()
 
     // doing this to avoid if statements
     albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterials[activeMaterial].albedo, TexCoord).rgb;
-    specular = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterials[activeMaterial].specular, TexCoord).rgb;
+    specular = int(!useTextures)*(basicMaterial.specular) + int(useTextures)*texture(textureMaterials[activeMaterial].specular, TexCoord).rgb;
     localNormal = int(!useTextures)*(vec3(0.5, 0.5, 1)) + int(useTextures)*texture(textureMaterials[activeMaterial].normal, TexCoord).rgb;
 
     normal = Normal + (localNormal - vec3(0.5, 0.5, 1));
@@ -234,6 +235,7 @@ void main()
     // result *= 0.3;
 
     FragColor =  vec4(result, 1.0);
+    // FragColor =  vec4(abs(normal), 1.0);
 
     // FragColor =  vec4(vec3(LinearizeDepth(gl_FragCoord.z)), 1.0);
 }

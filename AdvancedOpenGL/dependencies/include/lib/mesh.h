@@ -9,10 +9,15 @@
 #include <lib/shader_s.h>
 #include <lib/structs/outline.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
 #include <string>
 #include <vector>
 
 using namespace std;
+
+// TODO optimize Draw w outline overload
 
 struct Vertex
 {
@@ -78,18 +83,52 @@ public:
         glActiveTexture(GL_TEXTURE0);
     }
 
-    void DrawWithOutline(Shader *shader, Outline outline)
+    // outline overload
+    void Draw(Shader *shader, Outline outline)
     {
+        // ? maybe put shader.use() for safety?
+
         // init
         glEnable(GL_STENCIL_TEST);
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
 
-        // draw (normal shader)
-        shader->use();
-        Draw(shader);
+        // -- Draw
+        unsigned int diffuseNR = 0;
+        unsigned int specularNR = 0;
+        unsigned int normalNR = 0;
 
+        for (int i = 0; i < textures.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i); // activate proper texture before binding
+
+            string index;
+            string type = textures[i].type;
+
+            if (type == "albedo")
+                index = to_string(diffuseNR++);
+            else if (type == "specular")
+                index = to_string(specularNR++);
+            else if (type == "normal")
+            {
+                index = to_string(normalNR++);
+                outline.outlineShader->use();
+                outline.outlineShader->setInt("normal", i);
+                shader->use();
+            }
+
+            shader->setInt("textureMaterials[" + index + "]." + type, i);
+            glBindTexture(GL_TEXTURE_2D, textures[i].id); // + possible optimization, put this part in setup, instead of draw
+        }
+
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
+
+        // -- EndDraw
         // disable
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -100,11 +139,19 @@ public:
         outline.outlineShader->use();
         outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
 
-        Transform scaledTranform = outline.transform;
-        scaledTranform.scale += outline.outlineThickness;
+        // -------------------------------------------------------
+        // Transform scaledTranform = outline.transform;
+        // scaledTranform.scale += outline.outlineThickness;
 
-        glm::mat4 modelMat = scaledTranform.GetModelMat();
+        // glm::mat4 modelMat = scaledTranform.GetModelMatx();
+        // outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
+
+        glm::mat4 modelMat = outline.transform.modelMatx;
+        glm::mat3 normalMat = outline.transform.normalMatx; // ! this is where u last were
+        // printf(glm::to_string(normalMat).c_str());
         outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
+        outline.outlineShader->setMat3("normalMat", glm::value_ptr(normalMat));
+        // -------------------------------------------------------
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -122,6 +169,52 @@ public:
 
         shader->use();
     }
+
+    // ++ make this Draw overload with extra Outline parameter
+    // void DrawWithOutline(Shader *shader, Outline outline)
+    // {
+    //     // init
+    //     glEnable(GL_STENCIL_TEST);
+    //     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    //     glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    //     glStencilMask(0xFF);
+
+    //     // draw (normal shader)
+    //     shader->use();
+    //     Draw(shader);
+
+    //     // disable
+    //     glDisable(GL_CULL_FACE);
+    //     glDisable(GL_DEPTH_TEST);
+    //     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    //     glStencilMask(0x00);
+
+    //     // draw (outline shader)
+    //     outline.outlineShader->use();
+    //     outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
+
+    //     Transform scaledTranform = outline.transform;
+    //     scaledTranform.scale += outline.outlineThickness;
+
+    //     glm::mat4 modelMat = scaledTranform.GetModelMatx();
+    //     outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
+
+    //     glBindVertexArray(VAO);
+    //     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+
+    //     // defaults
+    //     glStencilMask(0xFF);
+    //     glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    //     glEnable(GL_DEPTH_TEST);
+    //     glEnable(GL_CULL_FACE);
+    //     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    //     glDisable(GL_STENCIL_TEST);
+
+    //     glBindVertexArray(0);
+    //     glActiveTexture(GL_TEXTURE0);
+
+    //     shader->use();
+    // }
 
 private:
     unsigned int VAO, VBO, EBO;

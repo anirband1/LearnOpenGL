@@ -93,7 +93,6 @@ void imgToTexID(const char *filename, unsigned int *texture, GLint wrapMode) // 
     }
     stbi_image_free(data);
 }
-
 int main()
 {
 #pragma region 'glfw: initialize and configure'
@@ -242,7 +241,7 @@ int main()
 
 #pragma endregion
 
-#pragma region // + Light buffers, VAO
+#pragma region // + VAO, VBO
 
     unsigned int cubeVAO, lightVAO, floorVAO;
     unsigned int cubeVBO, floorVBO;
@@ -323,13 +322,13 @@ int main()
         SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i);
     }
 
-    if (!useTextures)
-        litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
+    litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
+    litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
     outlineProperties.outlineShader = &singleColorShader;
-    outlineProperties.outlineThickness = 0.01f;
+    outlineProperties.outlineThickness = 0.0;
 
 #pragma endregion
 
@@ -372,15 +371,9 @@ int main()
 
         // + pass 1 normal cube
         // -- render cube 1
-        Transform cube1Transform;
+        Transform cube1Transform = Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f));
 
-        cube1Transform.position = glm::vec3(5.0, 0.0, 0.0);
-        cube1Transform.scale = glm::vec3(2.0f, 2.0f, 1.0f);
-
-        Transform cube2Transform;
-
-        cube2Transform.position = glm::vec3(5.0, 4.0, 6.0);
-        cube2Transform.scale = glm::vec3(2.0f, 2.0f, 1.0f);
+        Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
 
         // ! --------------------------------------------
         outlineAndDraw(&litShader, &singleColorShader, cubeVAO, numDrawnCubeVertices, cube1Transform, glm::vec3(0.04, 0.28, 0.26), 0.1f);
@@ -390,12 +383,10 @@ int main()
 
 #pragma region MODEL
 
-        Transform modelTransform;
+        Transform modelTransform = Transform(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
-        modelTransform.position = glm::vec3(0.0f, 0.0f, 0.0f);
-        modelTransform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-        glm::mat4 modelMat = modelTransform.GetModelMat();
-        glm::mat3 normalMat = modelTransform.GetNormalMat();
+        glm::mat4 modelMat = modelTransform.modelMatx;
+        glm::mat3 normalMat = modelTransform.normalMatx;
 
         litShader.setMat3("normalMat", glm::value_ptr(normalMat));
         litShader.setMat4("model", glm::value_ptr(modelMat));
@@ -408,16 +399,17 @@ int main()
 
 #pragma region FLOOR
 
-        Transform floorTransform;
+        Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
 
-        floorTransform.position = glm::vec3(0.0, -2.0, 1.0);
-        floorTransform.scale = glm::vec3(5.0, 5.0, 5.0);
+        glm::mat4 floorMat = floorTransform.modelMatx;
 
-        glm::mat4 floorMat = floorTransform.GetModelMat();
         litShader.setMat4("model", glm::value_ptr(floorMat));
+        litShader.setBool("useTextures", false);
 
         glBindVertexArray(floorVAO);
         glDrawArrays(GL_TRIANGLES, 0, numDrawnFloorVertices);
+
+        litShader.setBool("useTextures", useTextures);
 
 #pragma endregion
 
