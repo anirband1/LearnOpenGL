@@ -73,6 +73,9 @@
         "map": "cpp",
         "set": "cpp",
         "unordered_set": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "__verbose_abort": "cpp",
+        "charconv": "cpp",
+        "execution": "cpp"
     }
 }

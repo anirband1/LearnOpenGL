@@ -16,19 +16,29 @@ class Cube
 {
 public:
     const static int NUM_VERTICES = 36;
-    unsigned int VAO;
+
+    // declaration of static
+    static unsigned int VAO;
+    static unsigned int VBO;
+
+    static bool initialized;
 
     Transform transform;
 
-    Cube()
-    {
-        setupVAO();
-    }
+    Cube() {};
 
     Cube(Transform transform)
     {
-        setupVAO();
         this->transform = transform;
+    }
+
+    static void initialize()
+    {
+        if (!initialized)
+        {
+            setupVAO();
+            initialized = true;
+        }
     }
 
     void Draw(Shader *shader)
@@ -103,7 +113,8 @@ public:
     }
 
 private:
-    const float CUBE_PROPERTIES[288] = {
+    static constexpr std::array<float, 288> CUBE_PROPERTIES = {
+        // const float CUBE_PROPERTIES[288] = {
         // positions          // normals        // texture coords
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
         0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   //
@@ -147,9 +158,8 @@ private:
         -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
         -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  //
     };
-    unsigned int VBO;
 
-    void setupVAO()
+    static void setupVAO()
     {
         glGenVertexArrays(1, &VAO);
 
@@ -159,7 +169,7 @@ private:
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_PROPERTIES), CUBE_PROPERTIES, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(CUBE_PROPERTIES), CUBE_PROPERTIES.data(), GL_STATIC_DRAW);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
         glEnableVertexAttribArray(0);
@@ -172,5 +182,10 @@ private:
         glBindVertexArray(0);
     }
 };
+
+// definition of static
+unsigned int Cube::VAO = 0;
+unsigned int Cube::VBO = 0;
+bool Cube::initialized = false;
 
 #endif
