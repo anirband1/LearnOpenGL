@@ -22,8 +22,9 @@
 #include <lib/camera.h>
 #include <lib/lights.h>
 #include <lib/model.h>
-#include <lib/structs/transform.h>
 #include <lib/effects.h>
+#include <lib/structs/transform.h>
+#include <lib/primitives/cube.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <lib/stb_image.h>
@@ -167,6 +168,7 @@ int main()
 
 #pragma region // + Cube Vertices Init
 
+    /*
     float cubeVertices[] = {
         // positions          // normals        // texture coords
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //
@@ -211,7 +213,7 @@ int main()
         -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
         -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  //
     };
-
+    */
     glm::vec3 lightPositions[] = {
         glm::vec3(-1.3f, 1.0f, -2.5f),
         glm::vec3(2.3f, -3.3f, -4.0f),
@@ -220,7 +222,8 @@ int main()
     // ---------------------------------------------------
 
     // int numIndices = sizeof(indices) / sizeof(indices[0]); // ----
-    int numDrawnCubeVertices = (sizeof(cubeVertices) / sizeof(cubeVertices[0])) / 2; // *3/6
+
+    // int numDrawnCubeVertices = (sizeof(cubeVertices) / sizeof(cubeVertices[0])) / 2; // *3/6
 
 #pragma endregion
 
@@ -243,33 +246,36 @@ int main()
 
 #pragma region // + VAO, VBO
 
-    unsigned int cubeVAO, lightVAO, floorVAO;
-    unsigned int cubeVBO, floorVBO;
+    // unsigned int cubeVAO, lightVAO;
+    unsigned int floorVAO;
+    // unsigned int cubeVBO, lightVBO;
+    unsigned int floorVBO;
 
-    glGenVertexArrays(1, &lightVAO);
-    glGenVertexArrays(1, &cubeVAO);
+    // glGenVertexArrays(1, &lightVAO);
+    // glGenVertexArrays(1, &cubeVAO);
     glGenVertexArrays(1, &floorVAO);
 
-    glGenBuffers(1, &cubeVBO);
+    // glGenBuffers(1, &cubeVBO);
+    // glGenBuffers(1, &lightVBO);
     glGenBuffers(1, &floorVBO);
 
     // cube
-    glBindVertexArray(cubeVAO);
+    // glBindVertexArray(cubeVAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+    // glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float))); // normal
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // texCoord
-    glEnableVertexAttribArray(2);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float))); // normal
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // texCoord
+    // glEnableVertexAttribArray(2);
 
     // floor
     glBindVertexArray(floorVAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, floorVBO); // !
+    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
@@ -280,14 +286,13 @@ int main()
     glEnableVertexAttribArray(2);
 
     // light
-    glBindVertexArray(lightVAO);
+    // glBindVertexArray(lightVAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    // glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
     // glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    // glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -324,6 +329,11 @@ int main()
 
     litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
     litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
+
+    Transform cube3Transform = Transform(glm::vec3(5.0, 0.0, 2.0), glm::vec3(2.0f, 2.0f, 1.0f));
+
+    Cube cube = Cube(cube3Transform);
+    Cube light = Cube();
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
@@ -376,8 +386,11 @@ int main()
         Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
 
         // ! --------------------------------------------
-        outlineAndDraw(&litShader, &singleColorShader, cubeVAO, numDrawnCubeVertices, cube1Transform, glm::vec3(0.04, 0.28, 0.26), 0.1f);
-        outlineAndDraw(&litShader, &singleColorShader, cubeVAO, numDrawnCubeVertices, cube2Transform, glm::vec3(0.84, 0.568, 0.06), 0.1f);
+
+        cube.Draw(&litShader);
+        outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube1Transform, glm::vec3(0.04, 0.28, 0.26), 0.1f);
+        outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube2Transform, glm::vec3(0.84, 0.568, 0.06), 0.1f);
+        // outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube3Transform, glm::vec3(0.84, 0.468, 0.56), 0.1f);
 
 #pragma endregion
 
@@ -419,7 +432,7 @@ int main()
         lightSourceShader.setMat4("view", glm::value_ptr(view));
         lightSourceShader.setMat4("projection", glm::value_ptr(projection));
 
-        glBindVertexArray(lightVAO);
+        glBindVertexArray(light.VAO);
         for (int i = 0; i < (sizeof(lightPositions) / sizeof(lightPositions[0])); i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
@@ -428,7 +441,7 @@ int main()
 
             lightSourceShader.setMat4("model", glm::value_ptr(model));
 
-            glDrawArrays(GL_TRIANGLES, 0, numDrawnCubeVertices);
+            glDrawArrays(GL_TRIANGLES, 0, Cube::NUM_VERTICES);
         }
 
 #pragma endregion
@@ -441,9 +454,9 @@ int main()
 
     // + END RENDER LOOP
 
-    glDeleteVertexArrays(1, &lightVAO);
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteBuffers(1, &cubeVBO);
+    glDeleteVertexArrays(1, &light.VAO);
+    glDeleteVertexArrays(1, &cube.VAO);
+    // glDeleteBuffers(1, &cubeVBO);
 
     litShader.del();
     lightSourceShader.del();

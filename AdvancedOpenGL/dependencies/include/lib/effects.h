@@ -17,13 +17,6 @@
 // + only applies on non-assimp-model objects (like primitives)
 void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int numDrawnVertices, Transform transform, glm::vec3 color, float thickness)
 {
-    // * inits
-    // * draw (normal shader)
-    // * disable
-    // * draw (outline shdaer)
-    // * defaults
-
-    // ----------------------------------------------------------------------------------------------------
     // inits
     glEnable(GL_STENCIL_TEST);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -42,7 +35,6 @@ void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int
 
     // + ---------------------------------------------------------------------------------
     glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilMask(0x00);
 
@@ -67,12 +59,12 @@ void outlineAndDraw(Shader *shader, Shader *outlineShader, unsigned int VAO, int
     // defaults
     glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glDisable(GL_STENCIL_TEST);
 
     glBindVertexArray(0);
+    glActiveTexture(GL_TEXTURE0);
 
     shader->use();
 }

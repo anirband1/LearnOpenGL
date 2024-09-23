@@ -235,6 +235,7 @@ void main()
     // result *= 0.3;
 
     FragColor =  vec4(result, 1.0);
+
     // FragColor =  vec4(abs(normal), 1.0);
 
     // FragColor =  vec4(vec3(LinearizeDepth(gl_FragCoord.z)), 1.0);

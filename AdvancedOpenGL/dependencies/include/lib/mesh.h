@@ -29,8 +29,8 @@ struct Vertex
 struct Texture
 {
     unsigned int id;
-    string type;
-    string path;
+    std::string type;
+    std::string path;
 };
 
 class Mesh
@@ -40,10 +40,22 @@ public:
     vector<unsigned int> indices;
     vector<Texture> textures;
 
+    Mesh() {};
+
+    // + Model
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
     {
         this->vertices = vertices;
         this->indices = indices;
+        this->textures = textures;
+
+        setupMesh();
+    }
+
+    // + Primitives
+    Mesh(vector<Vertex> vertices, vector<Texture> textures)
+    {
+        this->vertices = vertices;
         this->textures = textures;
 
         setupMesh();
@@ -125,9 +137,6 @@ public:
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 
-        glBindVertexArray(0);
-        glActiveTexture(GL_TEXTURE0);
-
         // -- EndDraw
         // disable
         glDisable(GL_CULL_FACE);
@@ -140,15 +149,9 @@ public:
         outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
 
         // -------------------------------------------------------
-        // Transform scaledTranform = outline.transform;
-        // scaledTranform.scale += outline.outlineThickness;
-
-        // glm::mat4 modelMat = scaledTranform.GetModelMatx();
-        // outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
-
         glm::mat4 modelMat = outline.transform.modelMatx;
-        glm::mat3 normalMat = outline.transform.normalMatx; // ! this is where u last were
-        // printf(glm::to_string(normalMat).c_str());
+        glm::mat3 normalMat = outline.transform.normalMatx;
+
         outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
         outline.outlineShader->setMat3("normalMat", glm::value_ptr(normalMat));
         // -------------------------------------------------------
@@ -169,52 +172,6 @@ public:
 
         shader->use();
     }
-
-    // ++ make this Draw overload with extra Outline parameter
-    // void DrawWithOutline(Shader *shader, Outline outline)
-    // {
-    //     // init
-    //     glEnable(GL_STENCIL_TEST);
-    //     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    //     glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    //     glStencilMask(0xFF);
-
-    //     // draw (normal shader)
-    //     shader->use();
-    //     Draw(shader);
-
-    //     // disable
-    //     glDisable(GL_CULL_FACE);
-    //     glDisable(GL_DEPTH_TEST);
-    //     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    //     glStencilMask(0x00);
-
-    //     // draw (outline shader)
-    //     outline.outlineShader->use();
-    //     outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
-
-    //     Transform scaledTranform = outline.transform;
-    //     scaledTranform.scale += outline.outlineThickness;
-
-    //     glm::mat4 modelMat = scaledTranform.GetModelMatx();
-    //     outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
-
-    //     glBindVertexArray(VAO);
-    //     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
-
-    //     // defaults
-    //     glStencilMask(0xFF);
-    //     glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    //     glEnable(GL_DEPTH_TEST);
-    //     glEnable(GL_CULL_FACE);
-    //     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    //     glDisable(GL_STENCIL_TEST);
-
-    //     glBindVertexArray(0);
-    //     glActiveTexture(GL_TEXTURE0);
-
-    //     shader->use();
-    // }
 
 private:
     unsigned int VAO, VBO, EBO;
