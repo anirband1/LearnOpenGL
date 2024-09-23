@@ -22,7 +22,6 @@
 #include <lib/camera.h>
 #include <lib/lights.h>
 #include <lib/model.h>
-#include <lib/effects.h>
 #include <lib/structs/transform.h>
 #include <lib/primitives/cube.h>
 
@@ -246,31 +245,12 @@ int main()
 
 #pragma region // + VAO, VBO
 
-    // unsigned int cubeVAO, lightVAO;
     unsigned int floorVAO;
-    // unsigned int cubeVBO, lightVBO;
     unsigned int floorVBO;
 
-    // glGenVertexArrays(1, &lightVAO);
-    // glGenVertexArrays(1, &cubeVAO);
     glGenVertexArrays(1, &floorVAO);
 
-    // glGenBuffers(1, &cubeVBO);
-    // glGenBuffers(1, &lightVBO);
     glGenBuffers(1, &floorVBO);
-
-    // cube
-    // glBindVertexArray(cubeVAO);
-
-    // glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float))); // normal
-    // glEnableVertexAttribArray(1);
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // texCoord
-    // glEnableVertexAttribArray(2);
 
     // floor
     glBindVertexArray(floorVAO);
@@ -284,15 +264,6 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // texCoord
     glEnableVertexAttribArray(2);
-
-    // light
-    // glBindVertexArray(lightVAO);
-
-    // glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    // glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -330,10 +301,16 @@ int main()
     litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
     litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
+    Cube cube = Cube();
+    Cube light = Cube();
+
+    Transform cube1Transform = Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f));
+    Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
     Transform cube3Transform = Transform(glm::vec3(5.0, 0.0, 2.0), glm::vec3(2.0f, 2.0f, 1.0f));
 
-    Cube cube = Cube(cube3Transform);
-    Cube light = Cube();
+    Cube cube1 = Cube(cube1Transform);
+    Cube cube2 = Cube(cube2Transform);
+    Cube cube3 = Cube(cube3Transform);
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
@@ -381,16 +358,12 @@ int main()
 
         // + pass 1 normal cube
         // -- render cube 1
-        Transform cube1Transform = Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f));
-
-        Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
 
         // ! --------------------------------------------
 
-        cube.Draw(&litShader);
-        outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube1Transform, glm::vec3(0.04, 0.28, 0.26), 0.1f);
-        outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube2Transform, glm::vec3(0.84, 0.568, 0.06), 0.1f);
-        // outlineAndDraw(&litShader, &singleColorShader, cube.VAO, Cube::NUM_VERTICES, cube3Transform, glm::vec3(0.84, 0.468, 0.56), 0.1f);
+        cube1.Draw(&litShader, outlineProperties);
+        cube2.Draw(&litShader, outlineProperties);
+        cube3.Draw(&litShader, outlineProperties);
 
 #pragma endregion
 

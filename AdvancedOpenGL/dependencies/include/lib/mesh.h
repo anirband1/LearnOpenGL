@@ -106,6 +106,8 @@ public:
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
 
+        shader->use();
+
         // -- Draw
         unsigned int diffuseNR = 0;
         unsigned int specularNR = 0;

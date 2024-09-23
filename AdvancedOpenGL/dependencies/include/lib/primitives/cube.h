@@ -10,6 +10,8 @@
 #include <lib/structs/transform.h>
 #include <lib/shader_s.h>
 
+// TODO optimize setupVAO, make it static. all cubes share the same VAO
+
 class Cube
 {
 public:
@@ -48,16 +50,56 @@ public:
 
         glDisable(GL_STENCIL_TEST);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-
-        glDisable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         glStencilFunc(GL_ALWAYS, 0, 0xFF);
         glStencilMask(0xFF);
 
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
+    }
+
+    void Draw(Shader *shader, Outline outline)
+    {
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+
+        shader->use();
+
+        glm::mat4 modelMat = transform.modelMatx;
+        glm::mat3 normalMat = transform.normalMatx;
+        shader->setMat4("model", glm::value_ptr(modelMat));
+        shader->setMat3("normalMat", glm::value_ptr(normalMat));
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
+
+        // disable
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+
+        // draw (outline shader)
+        outline.outlineShader->use();
+        outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
+        outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
+        outline.outlineShader->setMat3("normalMat", glm::value_ptr(normalMat));
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glStencilMask(0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glDisable(GL_STENCIL_TEST);
+
+        glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
+
+        shader->use();
     }
 
 private:
