@@ -166,7 +166,7 @@ int main()
     litShader.insertDirective(1, "#define MAX_MATERIALS " + std::to_string(MAX_MATERIALS));
 #pragma endregion
 
-#pragma region // + Cube Vertices Init
+#pragma region // + Light Positions Init
 
     glm::vec3 lightPositions[] = {
         glm::vec3(-1.3f, 1.0f, -2.5f),
@@ -308,14 +308,9 @@ int main()
 
 #pragma region STENCIL & Z-TESTING
 
-        // + pass 1 normal cube
-        // -- render cube 1
-
-        // ! --------------------------------------------
-
         cube1.Draw(&litShader, outlineProperties);
         cube2.Draw(&litShader, outlineProperties);
-        cube3.Draw(&litShader, outlineProperties);
+        cube3.Draw(&litShader);
 
 #pragma endregion
 
@@ -357,7 +352,7 @@ int main()
         lightSourceShader.setMat4("view", glm::value_ptr(view));
         lightSourceShader.setMat4("projection", glm::value_ptr(projection));
 
-        glBindVertexArray(light.VAO);
+        glBindVertexArray(Cube::VAO);
         for (int i = 0; i < (sizeof(lightPositions) / sizeof(lightPositions[0])); i++)
         {
             glm::mat4 model = glm::mat4(1.0f);
@@ -379,9 +374,8 @@ int main()
 
     // + END RENDER LOOP
 
-    glDeleteVertexArrays(1, &light.VAO);
     glDeleteVertexArrays(1, &Cube::VAO);
-    // glDeleteBuffers(1, &cubeVBO);
+    glDeleteBuffers(1, &Cube::VBO);
 
     litShader.del();
     lightSourceShader.del();
