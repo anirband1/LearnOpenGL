@@ -24,6 +24,7 @@
 #include <lib/model.h>
 #include <lib/structs/transform.h>
 #include <lib/primitives/cube.h>
+#include <lib/primitives/plane.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <lib/stb_image.h>
@@ -176,50 +177,14 @@ int main()
 
 #pragma endregion
 
-#pragma region // + Floor Vertices Init
-
-    float floorVertices[] = {
-        // positions          // normals        // texture coords
-        -0.5f, 0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
-        0.5f, 0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
-        0.5f, 0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  //
-        0.5f, 0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   //
-        -0.5f, 0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //
-        -0.5f, 0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  //
-    };
-
-    // int numIndices = sizeof(indices) / sizeof(indices[0]); // ----
-    int numDrawnFloorVertices = (sizeof(floorVertices) / sizeof(floorVertices[0])) / 2; // *3/6
-
 #pragma endregion
 
 #pragma region // + VAO, VBO
 
-    unsigned int floorVAO;
-    unsigned int floorVBO;
-
-    glGenVertexArrays(1, &floorVAO);
-
-    glGenBuffers(1, &floorVBO);
-
-    // floor
-    glBindVertexArray(floorVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0); // position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float))); // normal
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float))); // texCoord
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     // ! call only after a GL context has been made
-    Cube::initialize(); // initialize VAO for cube
+    // initialize VAOs
+    Cube::initialize();
+    Plane::initialize();
 
 #pragma endregion
 
@@ -254,15 +219,15 @@ int main()
     litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
     litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
-    Cube light = Cube();
-
     Transform cube1Transform = Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f));
     Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
     Transform cube3Transform = Transform(glm::vec3(5.0, 0.0, 2.0), glm::vec3(2.0f, 2.0f, 1.0f));
+    Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
 
     Cube cube1 = Cube(cube1Transform);
     Cube cube2 = Cube(cube2Transform);
     Cube cube3 = Cube(cube3Transform);
+    Plane floor = Plane(floorTransform);
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
@@ -332,15 +297,9 @@ int main()
 
 #pragma region FLOOR
 
-        Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
-
-        glm::mat4 floorMat = floorTransform.modelMatx;
-
-        litShader.setMat4("model", glm::value_ptr(floorMat));
         litShader.setBool("useTextures", false);
 
-        glBindVertexArray(floorVAO);
-        glDrawArrays(GL_TRIANGLES, 0, numDrawnFloorVertices);
+        floor.Draw(&litShader);
 
         litShader.setBool("useTextures", useTextures);
 
@@ -376,6 +335,8 @@ int main()
 
     glDeleteVertexArrays(1, &Cube::VAO);
     glDeleteBuffers(1, &Cube::VBO);
+    glDeleteVertexArrays(1, &Plane::VAO);
+    glDeleteBuffers(1, &Plane::VBO);
 
     litShader.del();
     lightSourceShader.del();
