@@ -326,6 +326,7 @@ int main()
 #pragma endregion
 
         glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -23,13 +23,14 @@ public:
 
     static bool initialized;
 
-    // Transform transform;
+    Transform transform;
 
     Cube() {};
 
-    Cube(Transform transform) : PrimitiveRenderer(transform)
+    Cube(Transform transform) : PrimitiveRenderer(transform, NUM_VERTICES)
     {
         this->transform = transform;
+        this->_VAO = VAO; // ! This'll break if initialize() is not called first in main.cpp
     }
 
     static void initialize()
@@ -37,81 +38,14 @@ public:
         if (!initialized)
         {
             Cube instance;
-            VAO = instance.primitiveInitialize(CUBE_PROPERTIES, NUM_VERTICES);
+            VAO = instance.primitiveInitialize(CUBE_PROPERTIES);
             initialized = true;
         }
     }
 
-    void Draw(Shader *shader)
-    {
-        glEnable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
+    void Draw(Shader *shader) { primitiveDraw(shader); }
 
-        shader->use();
-
-        glm::mat4 modelMat = transform.modelMatx;
-        glm::mat3 normalMat = transform.normalMatx;
-        shader->setMat4("model", glm::value_ptr(modelMat));
-        shader->setMat3("normalMat", glm::value_ptr(normalMat));
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
-
-        glDisable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glStencilMask(0xFF);
-
-        glBindVertexArray(0);
-        glActiveTexture(GL_TEXTURE0);
-    }
-
-    void Draw(Shader *shader, Outline outline)
-    {
-        glEnable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-
-        shader->use();
-
-        glm::mat4 modelMat = transform.modelMatx;
-        glm::mat3 normalMat = transform.normalMatx;
-        shader->setMat4("model", glm::value_ptr(modelMat));
-        shader->setMat3("normalMat", glm::value_ptr(normalMat));
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
-
-        // disable
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-
-        // draw (outline shader)
-        outline.outlineShader->use();
-        outline.outlineShader->setVec3("outlineColor", glm::value_ptr(outline.outlineColor));
-        outline.outlineShader->setMat4("model", glm::value_ptr(modelMat));
-        outline.outlineShader->setMat3("normalMat", glm::value_ptr(normalMat));
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
-
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glStencilMask(0xFF);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        glDisable(GL_STENCIL_TEST);
-
-        glBindVertexArray(0);
-        glActiveTexture(GL_TEXTURE0);
-
-        shader->use();
-    }
+    void Draw(Shader *shader, Outline outline) { primitiveDraw(shader, outline); }
 
 private:
     static constexpr std::array<float, 288> CUBE_PROPERTIES = {
