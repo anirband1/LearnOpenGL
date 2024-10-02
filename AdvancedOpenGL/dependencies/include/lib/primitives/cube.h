@@ -15,7 +15,7 @@
 class Cube : public PrimitiveRenderer
 {
 public:
-    const static int NUM_VERTICES = 36;
+    const static int NUM_VERTICES = 36; // 132117
 
     // declaration of static
     static unsigned int VAO;

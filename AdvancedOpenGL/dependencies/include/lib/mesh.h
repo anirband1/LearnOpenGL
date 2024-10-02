@@ -134,6 +134,7 @@ public:
 
             shader->setInt("textureMaterials[" + index + "]." + type, i);
             glBindTexture(GL_TEXTURE_2D, textures[i].id); // + possible optimization, put this part in setup, instead of draw
+            // + nah optimization wont work once multiple texture thing is in place
         }
 
         glBindVertexArray(VAO);

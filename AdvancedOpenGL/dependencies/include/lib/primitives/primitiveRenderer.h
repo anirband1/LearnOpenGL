@@ -18,6 +18,7 @@ protected:
     unsigned int _VBO;
 
     PrimitiveRenderer() {};
+    virtual ~PrimitiveRenderer() {};
     PrimitiveRenderer(Transform transform, unsigned int NUM_VERTICES)
     {
         this->_transform = transform;

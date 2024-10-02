@@ -60,7 +60,7 @@ float lastX, lastY;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-void imgToTexID(const char *filename, unsigned int *texture, GLint wrapMode) // ! check out model.TextureFromFile
+unsigned int imgToTexID(const char *filename, unsigned int *texture, GLint wrapMode) // ! check out model.TextureFromFile
 {
     glGenTextures(1, texture); // +
 
@@ -93,6 +93,8 @@ void imgToTexID(const char *filename, unsigned int *texture, GLint wrapMode) // 
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+
+    return *texture;
 }
 
 int main()
@@ -196,10 +198,40 @@ int main()
 
 #pragma endregion
 
-#pragma region // + Textures and Pre-Loop
+#pragma region // + Cube inits
+
+    Transform cubeTransforms[] = {
+        Transform(glm::vec3(5.0, 0.0, 2.0), glm::vec3(2.0f, 2.0f, 1.0f)),
+    };
+
+    vector<Cube> cubes(sizeof(cubeTransforms) / sizeof(Transform));
+    for (int i = 0; i < sizeof(cubeTransforms) / sizeof(Transform); i++)
+    {
+        cubes.push_back(Cube(cubeTransforms[i]));
+    }
+
+    // -----------------------------------------------------------------
+
+    Transform outlineCubeTransforms[] = {
+        Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f)),
+        Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f)),
+    };
+
+    vector<Cube> outlineCubes(sizeof(outlineCubeTransforms) / sizeof(Transform));
+    for (int i = 0; i < sizeof(outlineCubeTransforms) / sizeof(Transform); i++)
+    {
+        outlineCubes.push_back(Cube(outlineCubeTransforms[i]));
+    }
+
+#pragma endregion
+
+#pragma region // + Pre-Loop
 
     litShader.use();
     litShader.setBool("useTextures", useTextures);
+
+    litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
+    litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
     for (int i = 0; i < POINT_LIGHT_NR; i++)
     {
@@ -216,23 +248,17 @@ int main()
         SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i);
     }
 
-    litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
-    litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
-
-    Transform cube1Transform = Transform(glm::vec3(5.0, 0.0, 0.0), glm::vec3(2.0f, 2.0f, 1.0f));
-    Transform cube2Transform = Transform(glm::vec3(5.0, 4.0, 6.0), glm::vec3(2.0f, 2.0f, 1.0f));
-    Transform cube3Transform = Transform(glm::vec3(5.0, 0.0, 2.0), glm::vec3(2.0f, 2.0f, 1.0f));
     Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
 
-    Cube cube1 = Cube(cube1Transform);
-    Cube cube2 = Cube(cube2Transform);
-    Cube cube3 = Cube(cube3Transform);
     Plane floor = Plane(floorTransform);
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
     outlineProperties.outlineShader = &singleColorShader;
     outlineProperties.outlineThickness = 0.0;
+
+    unsigned int voldy_texture;
+    imgToTexID("media/voldemort.jpeg", &voldy_texture, GL_CLAMP_TO_EDGE);
 
 #pragma endregion
 
@@ -273,9 +299,21 @@ int main()
 
 #pragma region STENCIL & Z-TESTING
 
-        cube1.Draw(&litShader, outlineProperties);
-        cube2.Draw(&litShader, outlineProperties);
-        cube3.Draw(&litShader);
+        for (int i = 0; i < outlineCubes.size(); i++)
+        {
+            outlineCubes[i].Draw(&litShader, outlineProperties);
+        }
+
+        glActiveTexture(GL_TEXTURE0 + voldy_texture);
+        litShader.setInt("textureMaterials[0].albedo", voldy_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+        litShader.setInt("textureMaterials[0].specular", voldy_texture);
+        litShader.setInt("textureMaterials[0].normal", voldy_texture);
+        glBindTexture(GL_TEXTURE_2D, voldy_texture);
+
+        for (int i = 0; i < cubes.size(); i++)
+        {
+            cubes[i].Draw(&litShader);
+        }
 
 #pragma endregion
 
