@@ -62,9 +62,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 unsigned int imgToTexID(const char *filename, unsigned int *texture, GLint wrapMode) // ! check out model.TextureFromFile
 {
-    glGenTextures(1, texture); // +
-
-    glBindTexture(GL_TEXTURE_2D, *texture); // +
+    glGenTextures(1, texture);
+    glBindTexture(GL_TEXTURE_2D, *texture);
 
     //* Wrapping method
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
@@ -80,12 +79,19 @@ unsigned int imgToTexID(const char *filename, unsigned int *texture, GLint wrapM
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, nrChannels; // number of color channels
-    stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
 
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        GLenum format = GL_RED; // + This is defaulted to GL_RED to avoid warning.
+        if (nrChannels == 1)
+            format = GL_RED;
+        else if (nrChannels == 3)
+            format = GL_RGB;
+        else if (nrChannels == 4)
+            format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -160,6 +166,7 @@ int main()
     Shader litShader("dependencies/shaders/litObject.vs", "dependencies/shaders/litObject.fs");
     Shader lightSourceShader("dependencies/shaders/light.vs", "dependencies/shaders/light.fs");
     Shader singleColorShader("dependencies/shaders/singleColor.vs", "dependencies/shaders/singleColor.fs");
+    Shader alphaShader("dependencies/shaders/alpha.vs", "dependencies/shaders/alpha.fs");
 
     litShader.insertDirective(1, "#define NEAR_CLIP " + std::to_string(NEAR_CLIP));
     litShader.insertDirective(1, "#define FAR_CLIP " + std::to_string(FAR_CLIP));
@@ -176,8 +183,6 @@ int main()
         glm::vec3(2.3f, -3.3f, -4.0f),
         glm::vec3(-4.0f, 2.0f, -12.0f),
         glm::vec3(0.0f, 0.0f, -3.0f)};
-
-#pragma endregion
 
 #pragma endregion
 
@@ -227,12 +232,35 @@ int main()
 
 #pragma region // + Pre-Loop
 
+    // -- Textures
     litShader.use();
     litShader.setBool("useTextures", useTextures);
 
     litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
     litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
+    unsigned int voldy_texture, grass_texture;
+    imgToTexID("media/voldemort.jpeg", &voldy_texture, GL_CLAMP_TO_EDGE);
+    imgToTexID("media/grass.png", &grass_texture, GL_CLAMP_TO_EDGE);
+
+    glActiveTexture(GL_TEXTURE0 + voldy_texture);
+    litShader.setInt("textureMaterials[1].albedo", voldy_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+    litShader.setInt("textureMaterials[1].specular", voldy_texture);
+    litShader.setInt("textureMaterials[1].normal", voldy_texture);
+    glBindTexture(GL_TEXTURE_2D, voldy_texture);
+
+    // glActiveTexture(GL_TEXTURE0 + grass_texture);
+    // litShader.setInt("textureMaterials[2].albedo", grass_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+    // litShader.setInt("textureMaterials[2].specular", grass_texture);
+    // litShader.setInt("textureMaterials[2].normal", grass_texture);
+    // glBindTexture(GL_TEXTURE_2D, grass_texture);
+
+    glActiveTexture(GL_TEXTURE0 + grass_texture);
+    glBindTexture(GL_TEXTURE_2D, grass_texture);
+
+    litShader.setInt("activeMaterial", 0);
+
+    // -- Lights
     for (int i = 0; i < POINT_LIGHT_NR; i++)
     {
         PointLight(&litShader, lightColor, lightStrength, lightPositions[i], i);
@@ -248,6 +276,7 @@ int main()
         SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i);
     }
 
+    // -- transforms
     Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
 
     Plane floor = Plane(floorTransform);
@@ -256,9 +285,6 @@ int main()
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
     outlineProperties.outlineShader = &singleColorShader;
     outlineProperties.outlineThickness = 0.0;
-
-    unsigned int voldy_texture;
-    imgToTexID("media/voldemort.jpeg", &voldy_texture, GL_CLAMP_TO_EDGE);
 
 #pragma endregion
 
@@ -295,25 +321,25 @@ int main()
         singleColorShader.setMat4("view", glm::value_ptr(view));
         singleColorShader.setMat4("projection", glm::value_ptr(projection));
 
+        litShader.use();
+
 #pragma endregion
 
-#pragma region STENCIL & Z-TESTING
+#pragma region PRIMITIVES
 
         for (int i = 0; i < outlineCubes.size(); i++)
         {
             outlineCubes[i].Draw(&litShader, outlineProperties);
         }
 
-        glActiveTexture(GL_TEXTURE0 + voldy_texture);
-        litShader.setInt("textureMaterials[0].albedo", voldy_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
-        litShader.setInt("textureMaterials[0].specular", voldy_texture);
-        litShader.setInt("textureMaterials[0].normal", voldy_texture);
-        glBindTexture(GL_TEXTURE_2D, voldy_texture);
+        litShader.setInt("activeMaterial", 1);
 
         for (int i = 0; i < cubes.size(); i++)
         {
             cubes[i].Draw(&litShader);
         }
+
+        litShader.setInt("activeMaterial", 0);
 
 #pragma endregion
 
@@ -335,11 +361,16 @@ int main()
 
 #pragma region FLOOR
 
-        litShader.setBool("useTextures", false);
+        alphaShader.use();
+        alphaShader.setMat4("view", glm::value_ptr(view));
+        alphaShader.setMat4("projection", glm::value_ptr(projection));
+        alphaShader.setMat4("model", glm::value_ptr(floor.transform.modelMatx));
 
-        floor.Draw(&litShader);
-
-        litShader.setBool("useTextures", useTextures);
+        alphaShader.setInt("texture01", grass_texture);
+        glActiveTexture(GL_TEXTURE0 + grass_texture);
+        glBindTexture(GL_TEXTURE_2D, grass_texture);
+        floor.Draw(&alphaShader);
+        litShader.use();
 
 #pragma endregion
 

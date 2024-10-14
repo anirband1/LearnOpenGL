@@ -64,8 +64,8 @@ in vec3 FragPos;
 in vec3 Normal;
 
 uniform bool useTextures;
-int activeMaterial;
-// uniform int activeMaterial;
+// int activeMaterial;
+uniform int activeMaterial;
 
 uniform BasicMaterial basicMaterial;
 uniform TextureMaterial textureMaterials[MAX_MATERIALS];
@@ -207,9 +207,6 @@ vec3 SpotResult(SpotLight spotLight)
 
 void main()
 {
-    // ! activeMaterial is not initialized
-    activeMaterial = 0;
-
     // doing this to avoid if statements
     albedo = int(!useTextures)*(basicMaterial.albedo) + int(useTextures)*texture(textureMaterials[activeMaterial].albedo, TexCoord).rgb;
     specular = int(!useTextures)*(basicMaterial.specular) + int(useTextures)*texture(textureMaterials[activeMaterial].specular, TexCoord).rgb;

@@ -27,9 +27,9 @@ protected:
 
     // -- since its const, theres no overhead of copying
     template <std::size_t N>
-    unsigned int primitiveInitialize(const std::array<float, N> &cubeProperties)
+    unsigned int primitiveInitialize(const std::array<float, N> &shapeProperties)
     {
-        setupVAO(cubeProperties);
+        setupVAO(shapeProperties);
 
         return this->_VAO;
     }
