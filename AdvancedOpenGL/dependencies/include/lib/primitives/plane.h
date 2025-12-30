@@ -29,7 +29,7 @@ public:
 
     Plane(Transform transform) : PrimitiveRenderer(transform, NUM_VERTICES)
     {
-        this->transform = transform;
+        this->transform = transform; // unnecessary?
         this->_VAO = VAO; // ! This'll break if initialize() is not called first in main.cpp
     }
 

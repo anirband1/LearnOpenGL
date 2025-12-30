@@ -33,6 +33,7 @@
 #include <cstring>
 #include <math.h>
 #include <filesystem>
+#include <map>
 
 #pragma endregion
 
@@ -160,6 +161,12 @@ int main()
     // glEnable(GL_STENCIL_TEST);
     // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    // -- Blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    // glBlendColor(0.0f, 0.0f, 0.0f, 1.0f);
+    // glBlendFunc(GL_CONSTANT_COLOR, GL_SRC_ALPHA); 
 #pragma endregion
 
 #pragma region // + Shader Init
@@ -174,6 +181,8 @@ int main()
     litShader.insertDirective(1, "#define NR_DIR " + std::to_string(DIR_LIGHT_NR));
     litShader.insertDirective(1, "#define NR_SPOT " + std::to_string(POINT_LIGHT_NR));
     litShader.insertDirective(1, "#define MAX_MATERIALS " + std::to_string(MAX_MATERIALS));
+
+    alphaShader.insertDirective(1, "#define MAX_MATERIALS " + std::to_string(MAX_MATERIALS));
 #pragma endregion
 
 #pragma region // + Light Positions Init
@@ -230,6 +239,57 @@ int main()
 
 #pragma endregion
 
+#pragma region // + Floor init
+
+    Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(15.0, 5.0, 15.0));
+
+    Plane floor = Plane(floorTransform);
+
+#pragma endregion
+
+#pragma region // + Grass inits
+
+    Transform grassTransforms[] = {
+        Transform(glm::vec3(3.0, -1.0, -2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(3.0, -1.0, -2.0), glm::vec3(0.0f, -90.0f, 90.0f), glm::vec3(2.0f, 2.0f, 2.0f)), // lmao rotations… kill me
+        Transform(glm::vec3(-1.0, -1.0, 3.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(-1.0, -1.0, 3.0), glm::vec3(0.0f, -90.0f, 90.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(-2.0, -1.0, 1.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(-2.0, -1.0, 1.0), glm::vec3(0.0f, -90.0f, 90.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(4.0, -1.0, -2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(4.0, -1.0, -2.0), glm::vec3(0.0f, -90.0f, 90.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(1.0, -1.0, 1.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(1.0, -1.0, 1.0), glm::vec3(0.0f, -90.0f, 90.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+    };
+
+    vector<Plane> grasses(sizeof(grassTransforms) / sizeof(Transform));
+    for (int i = 0; i < sizeof(grassTransforms) / sizeof(Transform); i++)
+    {
+        grasses.push_back(Plane(grassTransforms[i]));
+    }
+
+#pragma endregion
+
+#pragma region // + Window inits
+
+    Transform windowTransforms[] = {
+        Transform(glm::vec3(3.0, -1.0, -1.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(2.0, -1.0, 2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(2.0, -1.0, -2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(3.0, -1.0, -2.5), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(2.0, -1.0, -3.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(2.0, -1.0, -3.5), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(3.0, -1.0, -4.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+    };
+
+    vector<Plane> windows(sizeof(windowTransforms) / sizeof(Transform));
+    for (int i = 0; i < sizeof(windowTransforms) / sizeof(Transform); i++)
+    {
+        windows.push_back(Plane(windowTransforms[i]));
+    }
+
+#pragma endregion
+
 #pragma region // + Pre-Loop
 
     // -- Textures
@@ -239,9 +299,10 @@ int main()
     litShader.setVec3("basicMaterial.albedo", glm::value_ptr(objColor));
     litShader.setVec3("basicMaterial.specular", glm::value_ptr(objColor));
 
-    unsigned int voldy_texture, grass_texture;
+    unsigned int voldy_texture, grass_texture, window_texture;
     imgToTexID("media/voldemort.jpeg", &voldy_texture, GL_CLAMP_TO_EDGE);
     imgToTexID("media/grass.png", &grass_texture, GL_CLAMP_TO_EDGE);
+    imgToTexID("media/blending_transparent_window.png", &window_texture, GL_CLAMP_TO_EDGE);
 
     glActiveTexture(GL_TEXTURE0 + voldy_texture);
     litShader.setInt("textureMaterials[1].albedo", voldy_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
@@ -249,16 +310,29 @@ int main()
     litShader.setInt("textureMaterials[1].normal", voldy_texture);
     glBindTexture(GL_TEXTURE_2D, voldy_texture);
 
-    // glActiveTexture(GL_TEXTURE0 + grass_texture);
-    // litShader.setInt("textureMaterials[2].albedo", grass_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
-    // litShader.setInt("textureMaterials[2].specular", grass_texture);
-    // litShader.setInt("textureMaterials[2].normal", grass_texture);
-    // glBindTexture(GL_TEXTURE_2D, grass_texture);
+    glActiveTexture(GL_TEXTURE0 + grass_texture);
+    litShader.setInt("textureMaterials[2].albedo", grass_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+    litShader.setInt("textureMaterials[2].specular", grass_texture);
+    litShader.setInt("textureMaterials[2].normal", grass_texture);
+    glBindTexture(GL_TEXTURE_2D, grass_texture);
 
     glActiveTexture(GL_TEXTURE0 + grass_texture);
     glBindTexture(GL_TEXTURE_2D, grass_texture);
 
     litShader.setInt("activeMaterial", 0);
+
+    alphaShader.use();
+    glActiveTexture(GL_TEXTURE0 + grass_texture);
+    alphaShader.setInt("texArray[0]", grass_texture);
+    glBindTexture(GL_TEXTURE_2D, grass_texture);
+
+    glActiveTexture(GL_TEXTURE0 + window_texture);
+    alphaShader.setInt("texArray[1]", window_texture);
+    glBindTexture(GL_TEXTURE_2D, window_texture);
+
+    alphaShader.setInt("activeTexture", window_texture);
+
+    litShader.use();
 
     // -- Lights
     for (int i = 0; i < POINT_LIGHT_NR; i++)
@@ -273,18 +347,17 @@ int main()
 
     for (int i = 0; i < SPOT_LIGHT_NR; i++)
     {
-        SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i);
+        SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i); // ! lightPositions[i]
     }
-
-    // -- transforms
-    Transform floorTransform = Transform(glm::vec3(0.0, -2.0, 1.0), glm::vec3(5.0, 5.0, 5.0));
-
-    Plane floor = Plane(floorTransform);
 
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
     outlineProperties.outlineShader = &singleColorShader;
     outlineProperties.outlineThickness = 0.0;
+    
+    // -- Blend depth
+    std::multimap<float, Plane> sorted;
+
 
 #pragma endregion
 
@@ -325,6 +398,8 @@ int main()
 
 #pragma endregion
 
+// -- Opaque Stuff
+
 #pragma region PRIMITIVES
 
         for (int i = 0; i < outlineCubes.size(); i++)
@@ -339,7 +414,6 @@ int main()
             cubes[i].Draw(&litShader);
         }
 
-        litShader.setInt("activeMaterial", 0);
 
 #pragma endregion
 
@@ -349,6 +423,8 @@ int main()
 
         glm::mat4 modelMat = modelTransform.modelMatx;
         glm::mat3 normalMat = modelTransform.normalMatx;
+
+        litShader.setInt("activeMaterial", 0); 
 
         litShader.setMat3("normalMat", glm::value_ptr(normalMat));
         litShader.setMat4("model", glm::value_ptr(modelMat));
@@ -361,16 +437,56 @@ int main()
 
 #pragma region FLOOR
 
+        litShader.use();
+        litShader.setMat4("view", glm::value_ptr(view));
+        litShader.setMat4("projection", glm::value_ptr(projection));
+
+        litShader.setBool("useTextures", false);
+        floor.Draw(&litShader);
+        litShader.setBool("useTextures", true);
+
+#pragma endregion
+
+// -- Transparent Stuff
+
+#pragma region GRASSES
+        // not including this stuff in sorting cuz alpha discards
+
         alphaShader.use();
         alphaShader.setMat4("view", glm::value_ptr(view));
         alphaShader.setMat4("projection", glm::value_ptr(projection));
-        alphaShader.setMat4("model", glm::value_ptr(floor.transform.modelMatx));
 
-        alphaShader.setInt("texture01", grass_texture);
-        glActiveTexture(GL_TEXTURE0 + grass_texture);
-        glBindTexture(GL_TEXTURE_2D, grass_texture);
-        floor.Draw(&alphaShader);
-        litShader.use();
+        alphaShader.setInt("activeTexture", 0);
+
+        glDisable(GL_CULL_FACE);
+        for(int i=0; i<grasses.size(); i++)
+        {
+            grasses[i].Draw(&alphaShader);
+        }
+        glEnable(GL_CULL_FACE);
+
+#pragma endregion
+
+#pragma region WINDOWS
+
+        // grasses before this, alphaShader taking vals from that
+
+        sorted.clear();
+        for(int i=0; i<windows.size(); i++) // * map automatically sorts based on key
+        {
+            float dist = glm::length(camera.Position - windows[i].transform.getPosition());
+            // sorted[dist] = windows[i];
+            sorted.insert({dist, windows[i]});
+        }
+
+        alphaShader.setInt("activeTexture", 1);
+
+        glDisable(GL_CULL_FACE);
+        for(std::multimap<float, Plane>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); it++)
+        {
+            it->second.Draw(&alphaShader);
+        }
+        glEnable(GL_CULL_FACE);
 
 #pragma endregion
 
