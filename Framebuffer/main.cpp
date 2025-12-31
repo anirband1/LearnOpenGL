@@ -468,8 +468,13 @@ int main()
 
         processInput(window);
 
+#pragma region FRAMEBUFFER RENDERING
+
+        // * bind to framebuffer and draw scene as we normally would to color texture
         glBindFramebuffer(GL_FRAMEBUFFER, FBO); // bind to our framebuffer (off-screen rendering)
         glEnable(GL_DEPTH_TEST);                // enable depth testing (is disabled for screen quad)
+
+#pragma endregion
 
         glClearColor(0.09f, 0.11f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // for after image, remove color buffer bit
@@ -612,10 +617,9 @@ int main()
 
         // * writing to our framebuffer means nothing is drawn on screen (off-screen rendering)
         // * to show stuff on screen, use default fb (0)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);                                       // write to default framebuffer instead of ours
-        glDisable(GL_DEPTH_TEST);                                                   // disable depth test so screen-space quad isn't discarded due to depth test.
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);                                       // test commented
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // why not depth? disabled depth test
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // write to default framebuffer instead of ours
+        glDisable(GL_DEPTH_TEST);             // disable depth test so screen-space quad isn't discarded due to depth test.
+        glClear(GL_COLOR_BUFFER_BIT);         // why not depth? disabled depth test
 
         screenShader.use();
         glBindVertexArray(quadVAO);
@@ -628,6 +632,7 @@ int main()
 
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
+
         // swap buffers can be implemented with renderbuffers
         glfwSwapBuffers(window);
         glfwPollEvents();
