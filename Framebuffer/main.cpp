@@ -174,6 +174,7 @@ int main()
     Shader lightSourceShader("dependencies/shaders/light.vs", "dependencies/shaders/light.fs");
     Shader singleColorShader("dependencies/shaders/singleColor.vs", "dependencies/shaders/singleColor.fs");
     Shader alphaShader("dependencies/shaders/alpha.vs", "dependencies/shaders/alpha.fs");
+    Shader screenShader("dependencies/shaders/screen.vs", "dependencies/shaders/screen.fs");
 
     litShader.insertDirective(1, "#define NEAR_CLIP " + std::to_string(NEAR_CLIP));
     litShader.insertDirective(1, "#define FAR_CLIP " + std::to_string(FAR_CLIP));
@@ -201,6 +202,58 @@ int main()
     // initialize VAOs
     Cube::initialize();
     Plane::initialize();
+
+#pragma endregion
+
+#pragma region // + Framebuffer
+
+    unsigned int FBO;
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO); // both read and write (indiv possibles)
+
+    // -- Texture attachments
+    unsigned int fbTexture;
+    glGenTextures(1, &fbTexture);
+    glBindTexture(GL_TEXTURE_2D, fbTexture);
+
+    // * Since I have a retina display, getting actual size (retina has 2x size)
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+
+    // * dimensions are SCR, data is NULL (since we allocating and not filling[this happens in render loop])
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fbWidth, fbHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    // * don't care about mipmaps and wrapping, only filtering (in most cases)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // * created texture, now attach it to framebuffer
+
+    // * target: framebuffer type (draw, read or both).
+    // * attachment: type of attachment. This is color attachment. Can attach more than 1 color attachment (0).
+    // * textarget: type of the texture you want to attach.
+    // * texture: actual texture to attach.
+    // * level: mipmap level. Set to 0.
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture, 0);
+
+#pragma endregion
+
+#pragma region // +. Renderbuffer
+
+    // without this, depth testing goes haywire on frame buffer quad
+
+    unsigned int RBO;
+    glGenRenderbuffers(1, &RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+
+    // * allocate storage for depth and stencil buffer (we won't be sampling these)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbWidth, fbHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0); // unbind after allocating memory
+
+    // * attach RBO to framebuffer's depth and stencil attachment points
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // unbind framebuffer
 
 #pragma endregion
 
@@ -275,11 +328,7 @@ int main()
     Transform windowTransforms[] = {
         Transform(glm::vec3(3.0, -1.0, -1.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
         Transform(glm::vec3(2.0, -1.0, 2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
-        Transform(glm::vec3(2.0, -1.0, -2.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
-        Transform(glm::vec3(3.0, -1.0, -2.5), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
-        Transform(glm::vec3(2.0, -1.0, -3.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
-        Transform(glm::vec3(2.0, -1.0, -3.5), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
-        Transform(glm::vec3(3.0, -1.0, -4.0), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
+        Transform(glm::vec3(4.0, -1.0, -1.5), glm::vec3(90.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f)),
     };
 
     vector<Plane> windows(sizeof(windowTransforms) / sizeof(Transform));
@@ -290,9 +339,38 @@ int main()
 
 #pragma endregion
 
+#pragma region // + Screen Quad
+
+    // Since its only one quad, i'm making it manually cuz i know all the data
+    float quadVertices[] = {
+        // positions   // texCoords
+        -1.0f, 1.0f, 0.0f, 1.0f,  //
+        -1.0f, -1.0f, 0.0f, 0.0f, //
+        1.0f, -1.0f, 1.0f, 0.0f,  //
+
+        -1.0f, 1.0f, 0.0f, 1.0f, //
+        1.0f, -1.0f, 1.0f, 0.0f, //
+        1.0f, 1.0f, 1.0f, 1.0f   //
+    };
+
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
+    glBindVertexArray(0);
+
+#pragma endregion
+
 #pragma region // + Pre-Loop
 
-    // -- Textures
+#pragma region // -- Textures
+
     litShader.use();
     litShader.setBool("useTextures", useTextures);
 
@@ -305,13 +383,13 @@ int main()
     imgToTexID("media/blending_transparent_window.png", &window_texture, GL_CLAMP_TO_EDGE);
 
     glActiveTexture(GL_TEXTURE0 + voldy_texture);
-    litShader.setInt("textureMaterials[1].albedo", voldy_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+    litShader.setInt("textureMaterials[1].albedo", voldy_texture);
     litShader.setInt("textureMaterials[1].specular", voldy_texture);
     litShader.setInt("textureMaterials[1].normal", voldy_texture);
     glBindTexture(GL_TEXTURE_2D, voldy_texture);
 
     glActiveTexture(GL_TEXTURE0 + grass_texture);
-    litShader.setInt("textureMaterials[2].albedo", grass_texture); // TODO to make this not 0, finish the activeTexture logic in litShader
+    litShader.setInt("textureMaterials[2].albedo", grass_texture);
     litShader.setInt("textureMaterials[2].specular", grass_texture);
     litShader.setInt("textureMaterials[2].normal", grass_texture);
     glBindTexture(GL_TEXTURE_2D, grass_texture);
@@ -334,7 +412,10 @@ int main()
 
     litShader.use();
 
-    // -- Lights
+#pragma endregion
+
+#pragma region // -- Lights
+
     for (int i = 0; i < POINT_LIGHT_NR; i++)
     {
         PointLight(&litShader, lightColor, lightStrength, lightPositions[i], i);
@@ -350,13 +431,29 @@ int main()
         SpotLight(&litShader, lightColor, lightStrength, lightPositions[i], camera.LookDir, 12.5f, 17.5f, i); // ! lightPositions[i]
     }
 
+#pragma endregion
+
+#pragma region // -- Outline
+
     Outline outlineProperties;
     outlineProperties.outlineColor = glm::vec3(0.84, 0.568, 0.06);
     outlineProperties.outlineShader = &singleColorShader;
     outlineProperties.outlineThickness = 0.0;
 
-    // -- Blend depth
+#pragma endregion
+
+#pragma region // -- Blend depth
+
     std::multimap<float, Plane> sorted;
+
+#pragma endregion
+
+#pragma region // -- Framebuffer check
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        throw;
+
+#pragma endregion
 
 #pragma endregion
 
@@ -370,6 +467,9 @@ int main()
         lastFrame = currentFrame;
 
         processInput(window);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO); // bind to our framebuffer (off-screen rendering)
+        glEnable(GL_DEPTH_TEST);                // enable depth testing (is disabled for screen quad)
 
         glClearColor(0.09f, 0.11f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // for after image, remove color buffer bit
@@ -508,9 +608,27 @@ int main()
 
 #pragma endregion
 
+#pragma region RENDER FROM FRAMEBUFFER TO SCREEN
+
+        // * writing to our framebuffer means nothing is drawn on screen (off-screen rendering)
+        // * to show stuff on screen, use default fb (0)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);                                       // write to default framebuffer instead of ours
+        glDisable(GL_DEPTH_TEST);                                                   // disable depth test so screen-space quad isn't discarded due to depth test.
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);                                       // test commented
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // why not depth? disabled depth test
+
+        screenShader.use();
+        glBindVertexArray(quadVAO);
+        glActiveTexture(GL_TEXTURE0 + fbTexture);
+        screenShader.setInt("screenTexture", fbTexture);
+        glBindTexture(GL_TEXTURE_2D, fbTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+#pragma endregion
+
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
-
+        // swap buffers can be implemented with renderbuffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -521,6 +639,8 @@ int main()
     glDeleteBuffers(1, &Cube::VBO);
     glDeleteVertexArrays(1, &Plane::VAO);
     glDeleteBuffers(1, &Plane::VBO);
+
+    glDeleteFramebuffers(1, &FBO);
 
     litShader.del();
     lightSourceShader.del();
